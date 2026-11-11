@@ -1894,60 +1894,103 @@ canvas#gl-canvas {
 }
 
 /* ==================================================== */
-/* 모바일 / 태블릿 가상 D-Pad 컨트롤러 */
+/* 모바일 / 태블릿 360도 가상 터치 조이스틱 (원형 물방울 썸스틱) */
 /* ==================================================== */
-.mobile-dpad {
+.virtual-joystick {
   display: none;
   position: absolute;
-  bottom: 85px;
-  left: 18px;
-  z-index: 40;
-  width: 120px;
-  height: 120px;
+  bottom: 80px;
+  left: 20px;
+  z-index: 45;
+  width: 110px;
+  height: 110px;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: manipulation;
+  touch-action: none;
 }
 
 @media (max-width: 900px), (pointer: coarse) {
-  .mobile-dpad {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+  .virtual-joystick {
+    display: block;
+  }
+
+  /* 모바일에서 조이스틱과 채팅창이 겹치지 않도록 채팅창을 조이스틱 위로 이동 */
+  .middle-area {
+    margin-bottom: 115px !important;
+  }
+
+  .testimony-container {
+    width: 250px !important;
+    max-height: 130px !important;
+    background: rgba(15, 10, 20, 0.65) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(245, 197, 66, 0.25) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .testimony-list {
+    max-height: 65px !important;
   }
 }
 
-.dpad-btn {
-  width: 38px;
-  height: 38px;
-  background: rgba(25, 15, 25, 0.85);
-  border: 1px solid rgba(245, 197, 66, 0.4);
-  color: #f5c542;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 8px;
+.joystick-base {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 197, 66, 0.08) 0%, rgba(20, 15, 30, 0.55) 75%, rgba(10, 5, 15, 0.75) 100%);
+  border: 2px solid rgba(245, 197, 66, 0.35);
+  box-shadow: 0 0 15px rgba(245, 197, 66, 0.2), inset 0 0 12px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
-.dpad-btn:active {
-  background: rgba(245, 197, 66, 0.4);
-  color: #fff;
+
+/* 베이스 십자 가이드라인 */
+.joystick-base::before {
+  content: '';
+  position: absolute;
+  width: 60%;
+  height: 1px;
+  background: rgba(245, 197, 66, 0.2);
 }
-.dpad-mid {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.joystick-base::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  height: 60%;
+  background: rgba(245, 197, 66, 0.2);
 }
-.dpad-center {
-  width: 38px;
-  height: 38px;
+
+.joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  margin-left: -24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 32%, #ffffff 0%, #ffde6b 35%, #f5c542 65%, #c8931a 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 14px rgba(245, 197, 66, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(245, 197, 66, 0.4);
-  font-size: 14px;
+  pointer-events: none;
+  transform: translate(0px, 0px);
+  transition: transform 0.05s ease-out;
+}
+
+.joystick-knob.returning {
+  transition: transform 0.16s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.knob-core {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(140, 95, 10, 0.6);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
 }

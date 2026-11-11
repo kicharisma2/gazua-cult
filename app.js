@@ -31,6 +31,7 @@ const STATE = {
   isOnlineMultiplayer: false,
   priceHistory: [97000000, 97500000, 98000000, 98200000, 98500000],
   keys: { w: false, a: false, s: false, d: false, space: false },
+  joystickDir: { x: 0, y: 0 }, // 360도 모바일 가상 조이스틱 방향 벡터 (-1 ~ +1)
   clickTargetPos: null,
   lastMoveSendTime: 0,
   longVotes: 120,
@@ -1927,25 +1928,8 @@ function setupMovementControls() {
     });
   }
 
-  // 모바일/태블릿 가상 D-Pad 컨트롤러 리스너
-  const dpad = document.getElementById('mobileDpad');
-  if (dpad) {
-    dpad.querySelectorAll('.dpad-btn[data-dir]').forEach(btn => {
-      const dir = btn.dataset.dir;
-      const startMove = (ev) => {
-        ev.preventDefault();
-        STATE.keys[dir] = true;
-      };
-      const endMove = (ev) => {
-        ev.preventDefault();
-        STATE.keys[dir] = false;
-      };
-      btn.addEventListener('pointerdown', startMove);
-      btn.addEventListener('pointerup', endMove);
-      btn.addEventListener('pointercancel', endMove);
-      btn.addEventListener('pointerleave', endMove);
-    });
-  }
+  // 모바일/태블릿 360도 가상 터치 조이스틱 (원형 물방울 썸스틱) 설정
+  setupVirtualJoystick();
 
   // 미션 모달 열기 버튼 이벤트 바인딩
   const missionBtnTop = document.getElementById('btnOpenMissions');
@@ -2023,6 +2007,113 @@ function setupMovementControls() {
   });
 }
 
+// ====================================================
+// 모바일 / 태블릿 360도 가상 터치 조이스틱 (원형 물방울 썸스틱)
+// ====================================================
+function setupVirtualJoystick() {
+  const container = document.getElementById('virtualJoystick');
+  const base = document.getElementById('joystickBase');
+  const knob = document.getElementById('joystickKnob');
+  if (!container || !base || !knob) return;
+
+  STATE.joystickDir = { x: 0, y: 0 };
+  let activeTouchId = null;
+  let baseRect = null;
+  const maxRadius = 36; // 썸스틱 최대 반경 (픽셀)
+
+  function updateKnobPosition(clientX, clientY) {
+    if (!baseRect) baseRect = base.getBoundingClientRect();
+    const centerX = baseRect.left + baseRect.width / 2;
+    const centerY = baseRect.top + baseRect.height / 2;
+
+    let dx = clientX - centerX;
+    let dy = clientY - centerY;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist > maxRadius) {
+      dx = (dx / dist) * maxRadius;
+      dy = (dy / dist) * maxRadius;
+    }
+
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+
+    // 정규화 벡터 (-1 ~ +1). 화면 위쪽이 음수이므로 캐릭터 전진(+Y)을 위해 -dy 적용
+    STATE.joystickDir.x = dx / maxRadius;
+    STATE.joystickDir.y = -dy / maxRadius;
+  }
+
+  function resetKnob() {
+    activeTouchId = null;
+    STATE.joystickDir = { x: 0, y: 0 };
+    knob.classList.add('returning');
+    knob.style.transform = 'translate(0px, 0px)';
+  }
+
+  // 터치 이벤트 리스너 (모바일/태블릿)
+  container.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (activeTouchId !== null) return;
+    const touch = e.changedTouches[0];
+    activeTouchId = touch.identifier;
+    baseRect = base.getBoundingClientRect();
+    knob.classList.remove('returning');
+    updateKnobPosition(touch.clientX, touch.clientY);
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (e) => {
+    if (activeTouchId === null) return;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === activeTouchId) {
+        e.preventDefault();
+        updateKnobPosition(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+        break;
+      }
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchend', (e) => {
+    if (activeTouchId === null) return;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === activeTouchId) {
+        resetKnob();
+        break;
+      }
+    }
+  });
+
+  window.addEventListener('touchcancel', (e) => {
+    if (activeTouchId === null) return;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === activeTouchId) {
+        resetKnob();
+        break;
+      }
+    }
+  });
+
+  // PC 마우스 테스트 지원
+  container.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    activeTouchId = 'mouse';
+    baseRect = base.getBoundingClientRect();
+    knob.classList.remove('returning');
+    updateKnobPosition(e.clientX, e.clientY);
+
+    const onMouseMove = (ev) => {
+      if (activeTouchId === 'mouse') {
+        updateKnobPosition(ev.clientX, ev.clientY);
+      }
+    };
+    const onMouseUp = () => {
+      resetKnob();
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  });
+}
+
 function updatePlayerMovement(dt) {
   if (!playerCharacter) return;
 
@@ -2030,7 +2121,7 @@ function updatePlayerMovement(dt) {
   let isMoving = false;
 
   // -------------------------------------------------------------------------
-  // 화면 기준(Camera-relative) 3D 방향키 이동:
+  // 화면 기준(Camera-relative) 3D 키보드 & 360도 가상 조이스틱 이동:
   // -------------------------------------------------------------------------
   if (camera) {
     const camForward = new THREE.Vector3();
@@ -2041,10 +2132,17 @@ function updatePlayerMovement(dt) {
     const camRight = new THREE.Vector3();
     camRight.crossVectors(camForward, new THREE.Vector3(0, 1, 0)).normalize();
 
+    // 1) 키보드 WASD
     if (STATE.keys.w) moveDir.add(camForward);
     if (STATE.keys.s) moveDir.sub(camForward);
     if (STATE.keys.a) moveDir.sub(camRight);
     if (STATE.keys.d) moveDir.add(camRight);
+
+    // 2) 모바일 가상 조이스틱 (원형 물방울 썸스틱)
+    if (STATE.joystickDir && (Math.abs(STATE.joystickDir.x) > 0.05 || Math.abs(STATE.joystickDir.y) > 0.05)) {
+      moveDir.addScaledVector(camForward, STATE.joystickDir.y);
+      moveDir.addScaledVector(camRight, STATE.joystickDir.x);
+    }
   }
 
   const curPos = playerCharacter.group.position;
@@ -4008,11 +4106,27 @@ function setupServerConfigModal() {
 
   if (btnApply) {
     btnApply.addEventListener('click', () => {
-      const raw = (input?.value || '').trim();
+      let raw = (input?.value || '').trim();
       if (raw) {
+        // 혹시 전체 URL(예: ...?server=https://xxxx.trycloudflare.com)을 붙여넣은 경우, server= 값 자동 추출
+        if (raw.includes('server=')) {
+          const m = raw.match(/server=([^&]+)/);
+          if (m && m[1]) raw = decodeURIComponent(m[1]);
+        }
+
+        // 사용자가 GitHub Pages 사이트 화면 주소를 잘못 넣은 경우 친절한 안내 및 차단
+        if (raw.includes('github.io')) {
+          alert(
+            "⚠️ [주의] 입력하신 주소는 웹사이트 화면(GitHub Pages) 주소입니다!\n\n" +
+            "호스트 서버 주소는 내 PC에서 '가즈아교_글로벌서버.exe'를 실행했을 때 " +
+            "검은 콘솔창에 출력되는 'https://[무작위영문].trycloudflare.com' 링크를 넣으셔야 합니다."
+          );
+          return;
+        }
+
         const clean = raw.replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
         localStorage.setItem('GAZUA_SERVER_HOST', clean);
-        alert(`🌐 서버 주소가 설정되었습니다: ${clean}\n실시간 서버에 연결합니다!`);
+        alert(`🌐 실시간 멀티플레이 서버 연동 주소 설정 완료!\n대상: ${clean}\n실시간 서버 연결을 시작합니다.`);
         if (STATE.multiWs) STATE.multiWs.close();
         connectIntegratedMultiplayer();
       } else {

@@ -249,15 +249,13 @@
       </button>
     </div>
 
-    <!-- 모바일 / 태블릿 가상 D-Pad 컨트롤러 -->
-    <div id="mobileDpad" class="mobile-dpad clickable">
-      <button class="dpad-btn up" data-dir="w">▲</button>
-      <div class="dpad-mid">
-        <button class="dpad-btn left" data-dir="a">◀</button>
-        <div class="dpad-center">✝</div>
-        <button class="dpad-btn right" data-dir="d">▶</button>
+    <!-- 모바일 / 태블릿 360도 가상 터치 조이스틱 (원형 물방울 썸스틱) -->
+    <div id="virtualJoystick" class="virtual-joystick clickable">
+      <div id="joystickBase" class="joystick-base">
+        <div id="joystickKnob" class="joystick-knob">
+          <div class="knob-core"></div>
+        </div>
       </div>
-      <button class="dpad-btn down" data-dir="s">▼</button>
     </div>
 
   </div>
@@ -641,22 +639,26 @@
         <p class="modal-desc" style="margin:0;">GitHub Pages 웹사이트와 실시간 멀티플레이 서버(Cloudflare 터널/로컬)를 연동합니다.</p>
       </div>
 
-      <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px; margin: 16px 0; text-align: left; border: 1px solid rgba(255,255,255,0.1);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+      <div style="background: rgba(0,0,0,0.35); border-radius: 10px; padding: 14px; margin: 14px 0; text-align: left; border: 1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
           <span style="font-size: 13px; color: rgba(255,255,255,0.7);">현재 연결 상태:</span>
           <span id="serverModalStatusBadge" style="font-weight: 700; font-size: 13px; color: #38ef7d;">🟢 실시간 서버 연결됨</span>
         </div>
-        <div style="font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5;" id="serverModalCurrentHostText">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5;" id="serverModalCurrentHostText">
           연결 대상: 자동 감지 (동일 도메인)
         </div>
       </div>
 
+      <!-- 초보자 안내 배너 -->
+      <div style="background: rgba(245, 197, 66, 0.1); border: 1px solid rgba(245, 197, 66, 0.3); border-radius: 8px; padding: 10px; margin-bottom: 14px; text-align: left; font-size: 11.5px; line-height: 1.5; color: #fce79a;">
+        📌 <b>호스트 서버 주소란?</b><br>
+        현재 보시는 <b>GitHub Pages 사이트 주소가 아닙니다!</b><br>
+        호스트 컴퓨터에서 <b>'가즈아교_글로벌서버.exe'</b>를 켰을 때 검은 콘솔창에 찍히는 <b>'https://[무작위영문].trycloudflare.com'</b> 주소입니다.
+      </div>
+
       <div class="form-group" style="text-align: left;">
-        <label class="form-label" style="font-size: 13px; color: var(--gold);">호스트 서버 주소 (터널 / IP):</label>
-        <input type="text" id="inputCustomServer" class="form-input" placeholder="예: https://xxxx.trycloudflare.com 또는 192.168.0.x:8080">
-        <p style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; line-height: 1.4;">
-          💡 <b>'가즈아교_글로벌서버.exe'</b> 실행 시 콘솔에 출력되는 <b>공유 링크</b> 또는 <b>와이파이 고정 링크</b>를 입력하시면 GitHub Pages에서도 실시간 멀티플레이에 참가하실 수 있습니다.
-        </p>
+        <label class="form-label" style="font-size: 13px; color: var(--gold);">호스트 터널 서버 주소 입력:</label>
+        <input type="text" id="inputCustomServer" class="form-input" placeholder="예: https://abc-def-123.trycloudflare.com">
       </div>
 
       <div style="display:flex; gap: 8px; margin-top: 16px;">

@@ -93,39 +93,45 @@ def main():
     local_ip = get_local_ip()
     local_url = f"http://{local_ip}:8080/index.html"
     localhost_url = "http://localhost:8080/index.html"
+    github_pages_url = "https://kicharisma2.github.io/gazua-cult/"
 
     if public_url:
         full_online_url = f"{public_url}/index.html"
+        oneclick_github_url = f"{github_pages_url}?server={public_url}"
+
         url_file_path = os.path.join(base_dir, "ONLINE_URL.txt")
         try:
             with open(url_file_path, "w", encoding="utf-8") as f:
-                f.write(f"글로벌 인터넷 주소: {full_online_url}\n내부 와이파이 고정 주소: {local_url}\n내 컴퓨터 전용 주소: {localhost_url}\n")
+                f.write(f"🌟 GitHub Pages 원클릭 공유 링크:\n{oneclick_github_url}\n\n"
+                        f"🌐 Cloudflare 터널 직행 주소:\n{full_online_url}\n\n"
+                        f"🏠 같은 와이파이 고정 주소:\n{local_url}\n\n"
+                        f"💻 내 컴퓨터 전용 주소:\n{localhost_url}\n")
         except Exception:
             pass
 
-        print("\n" + "=" * 68, flush=True)
+        print("\n" + "=" * 70, flush=True)
         print("  🎉 가즈아교 글로벌 인터넷 라이브 성전이 성공적으로 열렸습니다! 🎉", flush=True)
-        print("=" * 68, flush=True)
-        print(f" 🌐 [외부 인터넷 공유 링크 (전 세계 누구나 접속)]:", flush=True)
-        print(f"     👉  {full_online_url}", flush=True)
-        print("-" * 68, flush=True)
-        print(f" 🏠 [내부 와이파이 고정 링크 (집/사무실 내 스마트폰/태블릿용)]:", flush=True)
+        print("=" * 70, flush=True)
+        print(f" 🌟 [GitHub Pages 원클릭 실시간 공유 링크 (강력 추천!)]:", flush=True)
+        print(f"     👉  {oneclick_github_url}", flush=True)
+        print("     (친구들에게 이 링크를 보내시면 설정 없이 바로 실시간 함께 접속됩니다!)", flush=True)
+        print("-" * 70, flush=True)
+        print(f" 🌐 [호스트 터널 서버 주소 (모달 수동 입력용)]:", flush=True)
+        print(f"     👉  {public_url}", flush=True)
+        print(f" 🏠 [내부 와이파이 고정 링크 (집/사무실 내 스마트폰용)]:", flush=True)
         print(f"     👉  {local_url}", flush=True)
-        print(f" 💻 [호스트 컴퓨터 전용 고정 링크]:", flush=True)
-        print(f"     👉  {localhost_url}", flush=True)
-        print("=" * 68, flush=True)
-        print(" 📢 [이용 및 주소 안내]", flush=True)
-        print(" 1. 외부 친구/지인에게 공유할 때는 '🌐 외부 인터넷 공유 링크'를 보내세요.", flush=True)
-        print(" 2. 같은 와이파이의 내 스마트폰/태블릿에서는 '🏠 내부 와이파이 고정 링크'를", flush=True)
-        print("    즐겨찾기해두시면 주소 변경 없이 언제든 바로 접속하실 수 있습니다.", flush=True)
-        print(" 3. 365일 24시간 단 하나의 영구 고정 주소(무료)가 필요하신 경우", flush=True)
-        print("    Render나 Railway 등 클라우드 호스팅을 이용하시면 단일 주소 유지가 가능합니다.", flush=True)
-        print(" - 이 창을 켜두시는 동안 전 세계 실시간 서버가 유지됩니다.", flush=True)
+        print("=" * 70, flush=True)
+        print(" 📢 [이용 및 공유 안내]", flush=True)
+        print(" 1. 친구들에게 '🌟 GitHub Pages 원클릭 공유 링크'를 카톡/디코로 보내주세요.", flush=True)
+        print("    주소 입력 없이 고정 깃허브 웹사이트에서 실시간 멀티플레이가 바로 열립니다!", flush=True)
+        print(" 2. 만약 GitHub Pages 사이트에서 '🌐 서버 연동' 버튼을 직접 누르실 경우,", flush=True)
+        print(f"    위의 '호스트 터널 서버 주소({public_url})'를 입력하시면 됩니다.", flush=True)
+        print(" - 이 창을 켜두시는 동안 전 세계 실시간 멀티플레이가 유지됩니다.", flush=True)
         print(" - 종료하시려면 키보드의 Ctrl + C 또는 창을 닫아주세요.", flush=True)
-        print("=" * 68 + "\n", flush=True)
+        print("=" * 70 + "\n", flush=True)
 
-        print(" [3/3] 기본 웹 브라우저에서 대성전을 자동으로 실행합니다...", flush=True)
-        webbrowser.open(full_online_url)
+        print(" [3/3] 브라우저에서 GitHub Pages 대성전을 자동으로 실행합니다...", flush=True)
+        webbrowser.open(oneclick_github_url)
     else:
         print("[!] 공인 URL 발급에 지연이 발생했습니다. 로컬 주소로 브라우저를 엽니다.", flush=True)
         webbrowser.open(localhost_url)
