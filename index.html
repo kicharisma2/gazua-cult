@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>가즈아교(GAZUA CULT) 온라인 대성전 | 주식·코인 실시간 3D 성전 메타버스</title>
+  <meta name="description" content="주식·코인 떡상을 기원하는 3D 사이비 메가처치 '가즈아교 대성전'. 귀여운 꼬마 천사 신도로 성전을 누비며 통성기도, 영끌 헌금, 계시록 뽑기, 악귀 단두대, 촛불 봉헌을 함께하세요.">
+  <meta name="keywords" content="가즈아교, 가즈아, 주식 기도, 코인 기도, 3D 성전, 삼성전자, 비트코인, 테슬라, 엔비디아, 사이비 종교, 떡상">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="† 가즈아교 대성전 - 떡상을 믿습니까? †">
+  <meta property="og:description" content="주식·코인 투자자를 위한 실시간 3D 가즈아교 성전! 귀여운 천사 신도로 성전을 누비며 구원받으세요.">
+  <meta property="og:type" content="website">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Three.js & OrbitControls -->
+  <script src="three.min.js"></script>
+  <script src="OrbitControls.js"></script>
+</head>
+<body>
+
+  <!-- 3D WebGL Canvas Container -->
+  <div id="canvas-container">
+    <canvas id="gl-canvas"></canvas>
+  </div>
+
+  <!-- UI Overlay Layer -->
+  <div class="ui-layer">
+
+    <!-- 1. TOP HEADER -->
+    <header class="header-bar">
+      <!-- 성전 브랜드 로고 -->
+      <div class="brand-section glass clickable">
+        <div class="cross-icon">†</div>
+        <div class="brand-titles">
+          <span class="brand-title">가즈아교 대성전</span>
+          <span class="brand-sub">대한예수교 떡상장로회 본당</span>
+        </div>
+      </div>
+
+      <!-- 성전 방(종목) 선택기 -->
+      <div class="room-selector glass clickable">
+        <span class="room-label">성전 이동:</span>
+        <select id="roomSelect" class="room-select">
+          <option value="KRW-BTC">🪙 비트코인(BTC) 본당</option>
+          <option value="KRW-ETH">🔷 이더리움(ETH) 은혜관</option>
+          <option value="KRW-DOGE">🐕 도지코인(DOGE) 방언관</option>
+          <option value="SEC-005930">🏢 삼성전자(005930) 구원실</option>
+          <option value="SEC-000660">💾 SK하이닉스(000660) 성령관</option>
+          <option value="US-TSLA">⚡ 테슬라(TSLA) 승천실</option>
+          <option value="US-NVDA">🟢 엔비디아(NVDA) 영생실</option>
+        </select>
+      </div>
+
+      <!-- 우측 신도 꾸미기 버튼, 신도 카운터, 서버 상태 & BGM 버튼 -->
+      <div class="header-right" style="display:flex; align-items:center; gap:8px;">
+        <button id="btnServerConfig" class="custom-btn-top glass clickable" style="border-color:#38ef7d; color:#38ef7d;" title="GitHub Pages 및 멀티플레이 서버 연동 설정">
+          <span id="serverStatusIcon">🟢</span>
+          <span id="serverStatusText">서버 연동</span>
+        </button>
+
+        <button id="btnOpenMissions" class="custom-btn-top glass clickable" style="border-color:#f5c542; color:#f5c542;" title="은혜 미션 수행 및 레벨/등급 호칭 확인">
+          <span>📜</span>
+          <span id="headerRankBadge">Lv.1 초신자</span>
+        </button>
+
+        <button id="btnOpenCustom" class="custom-btn-top glass clickable" title="성의, 머리장식, 날개, 직분 변경">
+          <span>👗</span>
+          <span>신도 꾸미기</span>
+        </button>
+
+        <div class="cult-counter glass clickable" title="현재 같은 성전에서 합심 기도 중인 실제 신도 수">
+          <div class="pulse-dot"></div>
+          <span>합심 기도: <b id="cultistCount" class="counter-num">1</b>명</span>
+        </div>
+
+        <button id="bgmBtn" class="icon-btn glass clickable" title="장엄한 파이프오르간 성가 찬양 ON/OFF">
+          🎵
+        </button>
+      </div>
+    </header>
+
+    <!-- 이동 가이드 배너 -->
+    <div class="control-guide glass">
+      <span>🎮 <b>WASD / 방향키 / 바닥 클릭</b> 이동 &nbsp;|&nbsp; <b>Spacebar 점프</b> (성전 기물 뛰어넘기!)</span>
+    </div>
+
+    <!-- 2. 중앙 실시간 시세 & 롱숏 부흥 대결 HUD -->
+    <div class="center-hud">
+      <div class="banner-pill glass">
+        <span>실시간 성화 시세:</span>
+        <span id="hudPrice" class="price-indicator up">98,500,000 KRW</span>
+        <span id="hudRate" class="rate-indicator up">▲ 3.45%</span>
+      </div>
+
+      <!-- 실시간 롱숏 부흥 대결 게이지 바 -->
+      <div id="holyWarHud" class="holy-war-hud glass">
+        <span style="color:#ff334b">🔥 결사 롱</span>
+        <div class="war-bar-bg">
+          <div id="warBarFill" class="war-bar-fill"></div>
+        </div>
+        <span style="color:#3282f6">회개 숏 💧</span>
+        <span id="warText" style="color:var(--gold); margin-left:4px;">롱 77% : 숏 23%</span>
+      </div>
+
+      <!-- 실시간 전 신도 합심 양봉 강림 게이지 바 -->
+      <div id="ritualHud" class="ritual-hud glass clickable" title="모든 신도가 통성기도, 헌금, 찬양을 합심하여 100%를 채우면 제단에서 황금 양봉 불기둥이 승천하며 전원에게 대량의 축복이 임합니다!">
+        <span style="color:#f5c542; font-weight:bold;">🕯️ 양봉 강림</span>
+        <div class="ritual-bar-bg">
+          <div id="ritualBarFill" class="ritual-bar-fill" style="width:35%;"></div>
+        </div>
+        <span id="ritualGaugeText" style="color:#ff334b; font-weight:bold; font-size:11px;">35%</span>
+      </div>
+    </div>
+
+    <!-- 3. 우측 플로팅 이벤트 / 미니게임 사이드바 -->
+    <aside class="event-sidebar clickable">
+      <button id="btnOpenMissionsSide" class="event-btn glass" style="border: 1px solid #f5c542;" title="은혜 미션을 완수하여 신도 등급과 호칭을 승급시킵니다">
+        <span class="event-icon">🏆</span>
+        <span>은혜 미션</span>
+      </button>
+
+      <button id="btnOpenWorldMap" class="event-btn glass" style="border: 1px solid #10b981;" title="대양봉교 6대 성지 월드맵 및 즉시 이동">
+        <span class="event-icon">🗺️</span>
+        <span>성지지도</span>
+      </button>
+
+      <button id="btnOpenChatSide" class="event-btn glass" style="border: 1px solid #a855f7;" title="전체 대화 및 지난 간증 기록 총람">
+        <span class="event-icon">💬</span>
+        <span>전체대화</span>
+      </button>
+
+      <button id="btnGoBull" class="event-btn glass" style="border: 1px solid #f59e0b;" title="남관 은혜 정원의 황금 황소 성물 동상으로 이동하여 오늘의 상한가 축복을 받습니다">
+        <span class="event-icon">🐂</span>
+        <span>황소 성물</span>
+      </button>
+
+      <button id="btnGoBoss" class="event-btn glass" style="border: 1px solid #38bdf8;" title="서관 통곡의 참회실로 이동하여 공매도 악귀 마왕을 신도들과 함께 퇴마합니다">
+        <span class="event-icon">👹</span>
+        <span>마왕 레이드</span>
+      </button>
+
+      <button id="btnOpenRoulette" class="event-btn glass" title="성령의 감동으로 돌리는 떡상 룰렛">
+        <span class="event-icon">🎡</span>
+        <span>성령 룰렛</span>
+      </button>
+
+      <button id="btnOpenRevelation" class="event-btn glass" title="오늘의 성스러운 떡상 계시와 행운 종목을 점칩니다">
+        <span class="event-icon">📜</span>
+        <span>떡상 계시록</span>
+      </button>
+
+      <button id="btnOpenGuillotine" class="event-btn glass" title="물린 종목을 올려 파란 음봉 악귀를 단두대로 베어버립니다">
+        <span class="event-icon">⚡</span>
+        <span>악귀 단두대</span>
+      </button>
+
+      <button id="btnOpenCandle" class="event-btn glass" title="제단에 소망과 평단가를 적은 성스러운 촛불을 봉헌합니다">
+        <span class="event-icon">🕯️</span>
+        <span>촛불 봉헌대</span>
+      </button>
+
+      <button id="btnOpenEvents" class="event-btn glass" title="신도들과 함께할 부흥회 및 특별 기도회 일정을 등록/확인합니다">
+        <span class="event-icon">📅</span>
+        <span>성도 부흥회</span>
+      </button>
+    </aside>
+
+    <!-- 4. MIDDLE AREA (실시간 신도 간증 피드) -->
+    <div class="middle-area">
+      <div class="testimony-container glass clickable">
+        <div class="testimony-header">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span>📜 신도들의 실시간 간증</span>
+            <span class="live-pulse"></span>
+          </div>
+          <button id="btnOpenChatHistory" class="chat-expand-btn" title="전체 대화 및 지난 간증 기록 보기">🗖 전체보기</button>
+        </div>
+        <div id="testimonyList" class="testimony-list">
+          <!-- 실시간 멀티플레이어 간증 추가 -->
+        </div>
+        <div class="testimony-input-box">
+          <input type="text" id="testimonyInput" class="testimony-input" placeholder="주여, 간증을 올립니다..." maxlength="80">
+          <button id="testimonySubmit" class="testimony-submit">아멘</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. BOTTOM PRAYER TOOLBAR -->
+    <footer class="bottom-bar">
+      <div class="toolbar-container glass clickable">
+        <!-- 점프 (스페이스바) -->
+        <button id="btnJumpAction" class="prayer-btn jump" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: bold;" title="스페이스바를 눌러 점프하고 의자/제단/기물을 훌쩍 뛰어넘습니다">
+          <span class="btn-icon">🦘</span>
+          <span class="btn-text">점프!</span>
+        </button>
+
+        <!-- 통성기도 -->
+        <button id="btnTongue" class="prayer-btn primary" title="두 손을 번쩍 들고 온몸을 떨며 떡상 방언을 외칩니다">
+          <span class="btn-icon">🙌</span>
+          <span class="btn-text">통성기도</span>
+        </button>
+
+        <!-- 은혜로 쓰러짐 -->
+        <button id="btnSlain" class="prayer-btn" title="감당할 수 없는 떡상의 은혜에 뒤로 쓰러집니다">
+          <span class="btn-icon">💫</span>
+          <span class="btn-text">은혜 쓰러짐</span>
+        </button>
+
+        <!-- 영끌 헌금 투척 -->
+        <button id="btnOffering" class="prayer-btn gold" title="제단으로 황금 코인 십일조를 쏟아붓습니다">
+          <span class="btn-icon">💰</span>
+          <span class="btn-text">영끌 헌금</span>
+        </button>
+
+        <!-- 부흥회 박수 -->
+        <button id="btnClap" class="prayer-btn" title="신나게 찬양 박수를 칩니다">
+          <span class="btn-icon">👏</span>
+          <span class="btn-text">찬양 박수</span>
+        </button>
+
+        <!-- 성수 퇴마 -->
+        <button id="btnHolyWater" class="prayer-btn" title="파란 음봉 하락 악귀를 쫓아내는 성수를 분사합니다">
+          <span class="btn-icon">💧</span>
+          <span class="btn-text">성수 퇴마</span>
+        </button>
+
+        <!-- 성가대 띠 변경 -->
+        <button id="btnToggleBelt" class="prayer-btn" title="[결사 롱] 붉은 띠 ↔ [회개 숏] 푸른 띠로 환복합니다">
+          <span class="btn-icon">🏷️</span>
+          <span class="btn-text">띠 환복</span>
+        </button>
+      </div>
+    </footer>
+
+    <!-- 랜드마크 근접 시 번쩍이는 대형 액션 상호작용 버튼 (모바일/PC 공용) -->
+    <div id="proximityActionContainer" class="proximity-action-container clickable" style="display:none;">
+      <button id="proximityActionBtn" class="proximity-action-btn">
+        <span id="proximityActionIcon" class="p-icon">⚔️</span>
+        <span id="proximityActionText" class="p-text">상호작용 실행</span>
+        <span class="p-key">[E]</span>
+      </button>
+    </div>
+
+    <!-- 모바일 / 태블릿 가상 D-Pad 컨트롤러 -->
+    <div id="mobileDpad" class="mobile-dpad clickable">
+      <button class="dpad-btn up" data-dir="w">▲</button>
+      <div class="dpad-mid">
+        <button class="dpad-btn left" data-dir="a">◀</button>
+        <div class="dpad-center">✝</div>
+        <button class="dpad-btn right" data-dir="d">▶</button>
+      </div>
+      <button class="dpad-btn down" data-dir="s">▼</button>
+    </div>
+
+  </div>
+
+  <!-- ---------------- MODALS (미니게임 & 부흥회 & 커스터마이징) ---------------- -->
+
+  <!-- 1. 떡상 계시록 모달 -->
+  <div id="modalRevelation" class="modal-overlay">
+    <div class="modal-card glass">
+      <button class="modal-close-btn">&times;</button>
+      <h2 class="modal-title">† 오늘의 떡상 계시록 †</h2>
+      <p class="modal-desc">가즈아 성령의 감동으로 임한 오늘 하루의 계시 말씀입니다.</p>
+      
+      <div class="revelation-card">
+        <p id="revVerse" class="revelation-verse">말씀을 수신 중입니다...</p>
+        <p id="revLuck" class="revelation-luck"></p>
+      </div>
+
+      <!-- 기획안 3-②: 오늘의 종가 신앙 예언 투표 -->
+      <h3 style="font-size: 13.5px; color: var(--gold); margin: 16px 0 6px 0; text-align: left;">🔮 오늘의 종가 신앙 예언 투표 (+50 EXP)</h3>
+      <p style="font-size: 11px; color: rgba(255,255,255,0.6); text-align: left; margin-bottom: 8px;">신도들의 믿음으로 오늘의 마감 캔들을 점치고 성전 피드에 선포하세요!</p>
+      <div class="prophecy-grid">
+        <div id="prophecyCard1" class="prophecy-card" onclick="castProphecyVote('상한가')">
+          <div class="prophecy-icon">🚀</div>
+          <div class="prophecy-name">상한가 (+30%)</div>
+          <div id="prophecyPct1" class="prophecy-pct">68% 지지</div>
+        </div>
+        <div id="prophecyCard2" class="prophecy-card" onclick="castProphecyVote('양봉')">
+          <div class="prophecy-icon">📈</div>
+          <div class="prophecy-name">양봉 상승 (롱)</div>
+          <div id="prophecyPct2" class="prophecy-pct">22% 지지</div>
+        </div>
+        <div id="prophecyCard3" class="prophecy-card" onclick="castProphecyVote('보합')">
+          <div class="prophecy-icon">⚖️</div>
+          <div class="prophecy-name">보합 횡보</div>
+          <div id="prophecyPct3" class="prophecy-pct">6% 지지</div>
+        </div>
+        <div id="prophecyCard4" class="prophecy-card" onclick="castProphecyVote('음봉')">
+          <div class="prophecy-icon">📉</div>
+          <div class="prophecy-name">음봉 하락 (숏)</div>
+          <div id="prophecyPct4" class="prophecy-pct">4% 지지</div>
+        </div>
+      </div>
+
+      <button class="action-btn modal-close-btn-action" onclick="document.getElementById('modalRevelation').classList.remove('active')">믿음으로 아멘!</button>
+    </div>
+  </div>
+
+  <!-- 2. 구마의 단두대 모달 -->
+  <div id="modalGuillotine" class="modal-overlay">
+    <div class="modal-card glass">
+      <button class="modal-close-btn">&times;</button>
+      <h2 class="modal-title">⚡ 구마의 단두대 (손절 제령) ⚡</h2>
+      <p class="modal-desc">계좌를 옥죄는 파란 음봉 악귀를 단두대에 올리고 베어버리십시오!</p>
+
+      <div class="form-group">
+        <label class="form-label">물린 종목명 (악귀 이름):</label>
+        <input type="text" id="guillotineStock" class="form-input" placeholder="예: 삼전 9만층, 잡코인, 테슬라">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">현재 손실률 (%):</label>
+        <input type="text" id="guillotineLoss" class="form-input" placeholder="예: -42%">
+      </div>
+
+      <button id="btnExecGuillotine" class="action-btn" style="background: linear-gradient(135deg, #ff334b, #8a1420); color: #fff;">
+        단두대 낙하 & 악귀 처단!
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. 성스러운 촛불 봉헌대 모달 -->
+  <div id="modalCandle" class="modal-overlay">
+    <div class="modal-card glass">
+      <button class="modal-close-btn">&times;</button>
+      <h2 class="modal-title">🕯️ 성스러운 촛불 봉헌대 🕯️</h2>
+      <p class="modal-desc">간절한 소망과 목표가를 담아 제단 앞에 영원히 꺼지지 않는 촛불을 켭니다.</p>
+
+      <div class="form-group">
+        <label class="form-label">탈출 소망의 기도문:</label>
+        <input type="text" id="candleWish" class="form-input" placeholder="예: 평단가 오면 전액 기부하겠습니다">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">구원의 목표 가격:</label>
+        <input type="text" id="candlePrice" class="form-input" placeholder="예: 비트코인 1억 2천만 원">
+      </div>
+
+      <button id="btnExecCandle" class="action-btn">
+        제단에 성화 촛불 점화하기
+      </button>
+    </div>
+  </div>
+
+  <!-- 4. 성도 부흥회 이벤트 모달 -->
+  <div id="modalEvent" class="modal-overlay">
+    <div class="modal-card glass">
+      <button class="modal-close-btn">&times;</button>
+      <h2 class="modal-title">📅 가즈아교 성도 부흥회 일정 📅</h2>
+      <p class="modal-desc">신도들이 함께 모여 기도할 특별 집회를 등록하고 참여하세요!</p>
+
+      <!-- 현재 등록된 이벤트 리스트 -->
+      <div id="eventItemList" class="event-item-list">
+        <!-- 스크립트에서 자동 렌더링 -->
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid rgba(245, 197, 66, 0.25); margin: 16px 0;">
+
+      <h3 style="font-size: 14px; color: var(--gold); margin-bottom: 8px;">† 새 부흥회/기도회 등록</h3>
+      <div class="form-group">
+        <input type="text" id="newEventTitle" class="form-input" placeholder="집회 제목 (예: FOMC 금리인하 특별 통성기도회)">
+      </div>
+      <div class="form-group">
+        <input type="text" id="newEventTime" class="form-input" placeholder="일시 (예: 오늘 밤 22:30)">
+      </div>
+      <button id="btnCreateEvent" class="action-btn">부흥회 등록 & 전도하기</button>
+    </div>
+  </div>
+
+  <!-- 5. 신도 외형 꾸미기 모달 -->
+  <div id="modalCustomization" class="modal-overlay">
+    <div class="modal-card glass">
+      <button class="modal-close-btn">&times;</button>
+      <h2 class="modal-title">👗 신도 거듭남 (외형 꾸미기) 👗</h2>
+      <p class="modal-desc">새로운 성의와 직분을 입고 성전에 나아가 성령의 은혜를 받으십시오.</p>
+
+      <!-- 캐릭터 실시간 일러스트 아바타 카드 -->
+      <div id="customAvatarPreview" class="avatar-preview-card">
+        <div class="preview-avatar-wrap">
+          <div id="previewHalo" class="preview-halo">✨</div>
+          <div id="previewHead" class="preview-head">
+            <span id="previewHatIcon" class="preview-hat-icon">👑</span>
+            <div class="preview-eyes">
+              <span class="p-eye left">●</span>
+              <span class="p-eye right">●</span>
+            </div>
+            <div class="preview-blush">
+              <span class="p-blush left"></span>
+              <span class="p-blush right"></span>
+            </div>
+            <div class="preview-mouth">ω</div>
+          </div>
+          <div id="previewBody" class="preview-body">
+            <span id="previewSash" class="preview-sash"></span>
+            <span id="previewWingsIcon" class="preview-wings-icon">🪽</span>
+          </div>
+        </div>
+        <div class="preview-info">
+          <div id="previewNameTitle" class="preview-title">[초신자] 가즈아신도</div>
+          <div id="previewSummary" class="preview-summary">순백의 성의 · 황금 왕관 · 순백 날개</div>
+        </div>
+      </div>
+
+      <div class="custom-grid">
+        <div class="custom-option-group">
+          <label class="custom-label">신도 닉네임</label>
+          <input type="text" id="inputNick" class="form-input" placeholder="신도명 입력" maxlength="12">
+        </div>
+
+        <div class="custom-option-group">
+          <label class="custom-label">가즈아 직분 / 칭호</label>
+          <select id="selectTitle" class="custom-select">
+            <option value="[영끌집사]">🕯️ [영끌집사]</option>
+            <option value="[존버장로]">📜 [존버장로]</option>
+            <option value="[떡상목사]">✨ [떡상목사]</option>
+            <option value="[물타기전도사]">💧 [물타기전도사]</option>
+            <option value="[풀매수권사]">⚡ [풀매수권사]</option>
+            <option value="[구원받은성도]">🕊️ [구원받은성도]</option>
+          </select>
+        </div>
+
+        <div class="custom-option-group">
+          <label class="custom-label">성의(로브) 색상</label>
+          <select id="selectRobe" class="custom-select">
+            <option value="white">⚪ 순백의 성의 (White)</option>
+            <option value="crimson">🔴 불꽃 크림슨 (Crimson)</option>
+            <option value="gold">🟡 황금 떡상 (Gold)</option>
+            <option value="black">⚫ 침묵의 흑의 (Black)</option>
+            <option value="pink">🌸 자비의 핑크 (Pink)</option>
+            <option value="sky">💧 은총의 스카이 (Sky)</option>
+          </select>
+        </div>
+
+        <div class="custom-option-group">
+          <label class="custom-label">머리 성물 장식</label>
+          <select id="selectHat" class="custom-select">
+            <option value="halo">😇 성스러운 헤일로</option>
+            <option value="crown">👑 앙증맞은 황금 왕관</option>
+            <option value="catears">🐱 귀여운 냥이 귀</option>
+            <option value="witch">🧙 별빛 마법 고깔모</option>
+            <option value="candle">🕯️ 제단 촛불 화관</option>
+            <option value="horns">🐂 불타는 황소 뿔</option>
+            <option value="none">❌ 장식 없음</option>
+          </select>
+        </div>
+
+        <div class="custom-option-group">
+          <label class="custom-label">천사 날개</label>
+          <select id="selectWings" class="custom-select">
+            <option value="angel">🪽 순백 천사 날개</option>
+            <option value="mecha">✨ 황금 승천 날개</option>
+            <option value="devil">🦇 칠흑 악마 날개</option>
+            <option value="none">❌ 날개 숨김</option>
+          </select>
+        </div>
+
+        <div class="custom-option-group">
+          <label class="custom-label">포지션 어깨 띠</label>
+          <select id="selectBelt" class="custom-select">
+            <option value="long">🔴 결사 롱 (붉은 띠)</option>
+            <option value="short">🔵 회개 숏 (푸른 띠)</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btnApplyCustom" class="action-btn">새 성의 입고 거듭나기 (적용)</button>
+    </div>
+  </div>
+
+  <!-- 6. 성령의 떡상 룰렛 모달 -->
+  <div id="modalRoulette" class="modal-overlay">
+    <div class="modal-card glass">
+      <button class="modal-close-btn">&times;</button>
+      <h2 class="modal-title">🎡 성령의 떡상 룰렛 🎡</h2>
+      <p class="modal-desc">성령의 기운에 맡기고 룰렛을 돌려 오늘 하루 계좌의 대박 축복을 받으세요!</p>
+
+      <div class="roulette-container">
+        <div class="roulette-pointer"></div>
+        <div id="rouletteWheel" class="roulette-wheel">
+          <div class="roulette-center">가즈아</div>
+        </div>
+        <div id="rouletteResult" class="roulette-result">룰렛을 돌려 성령의 은혜를 받으십시오!</div>
+      </div>
+
+      <button id="btnSpinRoulette" class="action-btn">성령의 회전! (룰렛 돌리기)</button>
+    </div>
+  </div>
+
+  <!-- 7. 은혜 미션 & 신도 등급 승급 모달 -->
+  <div id="modalMissions" class="modal-overlay">
+    <div class="modal-card glass" style="max-width: 520px;">
+      <button class="modal-close-btn">&times;</button>
+      <h2 class="modal-title">🏆 은혜 미션 & 신도 등급 승급 🏆</h2>
+      <p class="modal-desc">미션을 완수하여 성화 경험치(EXP)를 쌓고 더 높은 등급과 권능의 호칭을 획득하세요!</p>
+
+      <!-- 내 등급 및 경험치 현황 카드 -->
+      <div class="mission-profile-card">
+        <div class="profile-rank-info">
+          <div class="rank-badge-large" id="modalRankBadge">Lv.1</div>
+          <div class="rank-text-group">
+            <div class="rank-title-large" id="modalRankTitle">[초신자]</div>
+            <div class="rank-name-large" id="modalPlayerName">존버신도</div>
+          </div>
+        </div>
+        <div class="exp-bar-container">
+          <div class="exp-bar-header">
+            <span>성화 경험치</span>
+            <span id="modalExpText">0 / 100 EXP (0%)</span>
+          </div>
+          <div class="exp-bar-bg">
+            <div id="modalExpFill" class="exp-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 일일 성전 미션 목록 -->
+      <h3 style="font-size: 14px; color: var(--gold); margin: 16px 0 8px 0; text-align: left;">† 오늘의 성화 일일 미션</h3>
+      <div id="missionListContainer" class="mission-list">
+        <!-- JS로 동적 렌더링 -->
+      </div>
+
+      <!-- 20단계 계급 체계 가이드 -->
+      <h3 style="font-size: 14px; color: var(--gold); margin: 18px 0 8px 0; text-align: left;">📜 대양봉교 20대 신도 계급 체계</h3>
+      <div id="rankRoadmapContainer" class="rank-roadmap" style="max-height: 160px; overflow-y: auto;">
+        <!-- JS로 동적 렌더링 -->
+      </div>
+
+      <button class="action-btn" onclick="document.getElementById('modalMissions').classList.remove('active')">은혜로운 마음으로 닫기</button>
+    </div>
+  </div>
+
+  <!-- 8. 전체 대화 및 지난 간증 기록 총람 모달 -->
+  <div id="modalChatHistory" class="modal-overlay">
+    <div class="modal-card glass chat-history-card">
+      <button class="modal-close-btn">&times;</button>
+      <div class="modal-header-banner chat-banner">
+        <h2 class="modal-title" style="margin:0 0 4px 0;">📜 대양봉교 전 성도 대화 및 간증 총람 📜</h2>
+        <p class="modal-desc" style="margin:0;">성전에서 신도들이 나눈 모든 대화와 은혜의 간증을 실시간으로 확인하실 수 있습니다.</p>
+      </div>
+
+      <div class="chat-filter-bar">
+        <button id="chatFilterAll" class="chat-filter-btn active" onclick="filterChatHistory('all')">전체 대화</button>
+        <button id="chatFilterChat" class="chat-filter-btn" onclick="filterChatHistory('chat')">신도 대화</button>
+        <button id="chatFilterSystem" class="chat-filter-btn" onclick="filterChatHistory('system')">성전 공지/축복</button>
+      </div>
+
+      <div id="fullChatHistoryList" class="full-chat-list">
+        <!-- JS로 동적 렌더링 -->
+      </div>
+
+      <div class="modal-chat-input-bar">
+        <input type="text" id="modalChatInput" class="testimony-input" placeholder="전 성도에게 은혜의 한마디를 나누소서... (Enter)" maxlength="80">
+        <button id="modalChatSubmit" class="testimony-submit">외치기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. 대양봉교 6대 성지 월드맵 가이드 모달 -->
+  <div id="modalWorldMap" class="modal-overlay">
+    <div class="modal-card glass world-map-card">
+      <button class="modal-close-btn">&times;</button>
+      <div class="modal-header-banner world-banner">
+        <h2 class="modal-title" style="margin:0 0 4px 0;">🗺️ 대양봉교(大陽峯敎) 6대 성지 월드맵 🗺️</h2>
+        <p class="modal-desc" style="margin:0;">광활한 대양봉교 성전을 탐험하고 원하는 성지로 즉시 이동하여 축복을 받으세요.</p>
+      </div>
+
+      <div class="world-zone-grid">
+        <!-- 1. 황금 대성전 -->
+        <div class="zone-card">
+          <div class="zone-badge">중앙 성소</div>
+          <div class="zone-icon">🏛️</div>
+          <div class="zone-title">① 황금 대성전</div>
+          <div class="zone-desc">중앙 본당 광장, 3단 황금 강대상 및 최고존엄 교주의 황금 왕좌가 위치한 성전의 심장부입니다.</div>
+          <button class="zone-teleport-btn" onclick="teleportToZone('main')">즉시 이동</button>
+        </div>
+
+        <!-- 2. 양봉의 숲 -->
+        <div class="zone-card">
+          <div class="zone-badge">탐험·보물</div>
+          <div class="zone-icon">🌲</div>
+          <div class="zone-title">② 양봉의 숲 & 황금 성물</div>
+          <div class="zone-desc">성전 동편 정원. 붉은 양봉 기둥과 성스러운 은혜가 깃든 곳입니다.</div>
+          <button class="zone-teleport-btn" onclick="teleportToZone('forest')">즉시 이동</button>
+        </div>
+
+        <!-- 3. 천상의 전망대 -->
+        <div class="zone-card">
+          <div class="zone-badge">공중 테라스</div>
+          <div class="zone-icon">🌌</div>
+          <div class="zone-title">③ 천상의 2층 전망대</div>
+          <div class="zone-desc">구름 위에서 대성전 전경과 붉은 십자가를 굽어보며 사색과 기도를 올리는 고위 성소입니다.</div>
+          <button class="zone-teleport-btn" onclick="teleportToZone('observatory')">즉시 이동</button>
+        </div>
+
+        <!-- 4. 공매도 심연 -->
+        <div class="zone-card">
+          <div class="zone-badge">보스 레이드</div>
+          <div class="zone-icon">👹</div>
+          <div class="zone-title">④ 공매도 심연 통곡실</div>
+          <div class="zone-desc">서관 격전지. 파란 음봉 악귀 마왕이 도사리고 있으며 신도들이 성수로 합동 퇴마를 진행합니다.</div>
+          <button class="zone-teleport-btn" onclick="teleportToZone('boss')">즉시 이동</button>
+        </div>
+
+        <!-- 5. 거래소 거리 & 신도 카페 -->
+        <div class="zone-card">
+          <div class="zone-badge">친교·교류</div>
+          <div class="zone-icon">☕</div>
+          <div class="zone-title">⑤ 거래소 거리 & 카페</div>
+          <div class="zone-desc">동관 성도 카페와 바 카운터. 신도들이 모여 차를 마시고 종목 토론과 교제를 나눕니다.</div>
+          <button class="zone-teleport-btn" onclick="teleportToZone('cafe')">즉시 이동</button>
+        </div>
+
+        <!-- 6. 달나라 성지 & 황금 황소 -->
+        <div class="zone-card">
+          <div class="zone-badge">상한가 성물</div>
+          <div class="zone-icon">🐂</div>
+          <div class="zone-title">⑥ 달나라 성지 & 황소상</div>
+          <div class="zone-desc">남관 야외 분수 광장. 상한가 축복을 내리는 성스러운 황금 황소 성물상이 군림하고 있습니다.</div>
+          <button class="zone-teleport-btn" onclick="teleportToZone('bull')">즉시 이동</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. 글로벌 서버 연동 설정 모달 -->
+  <div id="modalServerConfig" class="modal-overlay">
+    <div class="modal-card glass" style="max-width: 480px;">
+      <button class="modal-close-btn">&times;</button>
+      <div class="modal-header-banner" style="background: linear-gradient(135deg, rgba(56, 239, 125, 0.25), rgba(17, 153, 142, 0.35));">
+        <h2 class="modal-title" style="margin:0 0 4px 0; color:#38ef7d;">🌐 대양봉교 글로벌 서버 연동 설정 🌐</h2>
+        <p class="modal-desc" style="margin:0;">GitHub Pages 웹사이트와 실시간 멀티플레이 서버(Cloudflare 터널/로컬)를 연동합니다.</p>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px; margin: 16px 0; text-align: left; border: 1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <span style="font-size: 13px; color: rgba(255,255,255,0.7);">현재 연결 상태:</span>
+          <span id="serverModalStatusBadge" style="font-weight: 700; font-size: 13px; color: #38ef7d;">🟢 실시간 서버 연결됨</span>
+        </div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5;" id="serverModalCurrentHostText">
+          연결 대상: 자동 감지 (동일 도메인)
+        </div>
+      </div>
+
+      <div class="form-group" style="text-align: left;">
+        <label class="form-label" style="font-size: 13px; color: var(--gold);">호스트 서버 주소 (터널 / IP):</label>
+        <input type="text" id="inputCustomServer" class="form-input" placeholder="예: https://xxxx.trycloudflare.com 또는 192.168.0.x:8080">
+        <p style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; line-height: 1.4;">
+          💡 <b>'가즈아교_글로벌서버.exe'</b> 실행 시 콘솔에 출력되는 <b>공유 링크</b> 또는 <b>와이파이 고정 링크</b>를 입력하시면 GitHub Pages에서도 실시간 멀티플레이에 참가하실 수 있습니다.
+        </p>
+      </div>
+
+      <div style="display:flex; gap: 8px; margin-top: 16px;">
+        <button id="btnApplyServer" class="action-btn" style="flex:2; background: linear-gradient(135deg, #11998e, #38ef7d); color:#000; font-weight:800;">
+          🚀 서버 연동하기
+        </button>
+        <button id="btnResetServer" class="action-btn" style="flex:1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+          🔄 기본값 복원
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 레벨업 환희 축하 플로팅 배너 -->
+  <div id="levelUpBanner" class="levelup-banner">
+    <div class="levelup-content glass">
+      <div class="levelup-icon">🎉</div>
+      <div class="levelup-text">
+        <div class="levelup-title">† 은혜의 등급 승급! †</div>
+        <div id="levelupDesc" class="levelup-desc">축하합니다! [Lv.2 새신자]로 승급하셨습니다!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 양봉 강림 대성령 축복 대형 배너 -->
+  <div id="ritualAscensionBanner" class="levelup-banner">
+    <div class="levelup-content glass" style="border-color: #ff334b; box-shadow: 0 0 35px #ff334b;">
+      <div class="levelup-icon">🕯️</div>
+      <div class="levelup-text">
+        <div class="levelup-title" style="color:#ff334b; font-size:18px;">† 떡상 성령 임재! 대양봉 강림 완료! †</div>
+        <div class="levelup-desc" style="color:#f5c542;">전 신도 합심 기도로 황금 양봉이 승천했습니다! (축복 경험치 +200 EXP)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 공매도 마왕 토벌 축복 배너 -->
+  <div id="bossDefeatedBanner" class="levelup-banner">
+    <div class="levelup-content glass" style="border-color: #38bdf8; box-shadow: 0 0 35px #38bdf8;">
+      <div class="levelup-icon">⚡</div>
+      <div class="levelup-text">
+        <div class="levelup-title" style="color:#38bdf8; font-size:18px;">† 공매도 악귀 마왕 궤멸! †</div>
+        <div class="levelup-desc" style="color:#fff;">파란 음봉 악귀가 단두대와 성수에 퇴마되었습니다! (경험치 +150 EXP)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sound & Application Scripts -->
+  <script src="audio.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
