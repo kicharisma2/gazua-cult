@@ -13,6 +13,42 @@ import threading
 import server
 
 import socket
+import atexit
+
+GIST_ID = "8bd7ddc5c6df9538c8092e1f01c9b2fa"
+GITHUB_SITE_URL = "https://kicharisma2.github.io/gazua-cult/"
+
+def check_single_instance(port=8080):
+    """이미 8080 포트를 점유 중인 서버가 있는지 확인 (중복 호스트 방지)"""
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(('127.0.0.1', port))
+        s.close()
+        return True
+    except OSError:
+        return False
+
+def update_cloud_registry(status, host=""):
+    """GitHub Gist 레지스트리에 현재 살아있는 호스트 주소를 1초 만에 자동 등록"""
+    try:
+        import json
+        payload = json.dumps({
+            "status": status,
+            "host": host,
+            "updated": int(time.time())
+        })
+        p = subprocess.Popen(
+            ["gh", "gist", "edit", GIST_ID, "-f", "host.json", "-"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        p.communicate(payload)
+        return True
+    except Exception as e:
+        print(f"[!] 클라우드 자동 등록 알림: {e}", flush=True)
+        return False
 
 def get_local_ip():
     try:
@@ -50,9 +86,20 @@ def main():
     base_dir = get_base_dir()
     os.chdir(base_dir)
 
-    print("=" * 68, flush=True)
-    print(" † 대한예수교 떡상장로회 [가즈아교 온라인 대성전] 글로벌 서버 가동 †", flush=True)
-    print("=" * 68, flush=True)
+    print("=" * 70, flush=True)
+    print(" † 대한예수교 떡상장로회 [가즈아교 온라인 대성전] 글로벌 호스트 가동 †", flush=True)
+    print("=" * 70, flush=True)
+
+    # 0. 중복 실행 방지 체크 (포트 8080 점유 검사)
+    if not check_single_instance(8080):
+        print(" [!] 가즈아교 글로벌 호스트 서버가 이미 실행 중입니다!", flush=True)
+        print("     (중복 실행 방지: 한 대의 PC에서는 1개의 호스트만 가동됩니다.)", flush=True)
+        print(f"     대성전 깃허브 웹사이트를 브라우저로 엽니다: {GITHUB_SITE_URL}", flush=True)
+        print("=" * 70, flush=True)
+        webbrowser.open(GITHUB_SITE_URL)
+        time.sleep(2)
+        return
+
     print(" [1/3] 로컬 대성전 통합 서버(포트 8080) 시작 중...", flush=True)
 
     # 1. 로컬 통합 서버(HTTP + WebSocket) 인프로세스 백그라운드 스레드 시작
@@ -60,11 +107,11 @@ def main():
     time.sleep(1.2)
 
     # 2. Cloudflare 터널 실행
-    print(" [2/3] 전 세계 인터넷 실시간 공유를 위한 보안 공인 터널 연결 중...", flush=True)
+    print(" [2/3] 전 세계 실시간 멀티플레이를 위한 보안 공인 터널 연결 중...", flush=True)
     cf_path = find_cloudflared()
     if not cf_path:
-        print("[!] cloudflared.exe를 찾을 수 없습니다. 로컬 전용(http://localhost:8080/index.html)으로 실행합니다.", flush=True)
-        webbrowser.open("http://localhost:8080/index.html")
+        print("[!] cloudflared.exe를 찾을 수 없습니다. 로컬 전용으로 실행합니다.", flush=True)
+        webbrowser.open(GITHUB_SITE_URL)
         try:
             while True:
                 time.sleep(1)
@@ -79,7 +126,7 @@ def main():
     )
 
     public_url = None
-    print(" [*] 공인 접속 주소(Public HTTPS URL) 생성 중입니다. 잠시만 기다려주세요...", flush=True)
+    print(" [*] 공인 접속 주소 생성 중입니다. 잠시만 기다려주세요...", flush=True)
 
     while True:
         line = tunnel_proc.stderr.readline().decode('utf-8', errors='ignore')
@@ -90,57 +137,54 @@ def main():
             public_url = m.group(0)
             break
 
-    local_ip = get_local_ip()
-    local_url = f"http://{local_ip}:8080/index.html"
-    localhost_url = "http://localhost:8080/index.html"
-    github_pages_url = "https://kicharisma2.github.io/gazua-cult/"
-
     if public_url:
-        full_online_url = f"{public_url}/index.html"
-        oneclick_github_url = f"{github_pages_url}?server={public_url}"
+        print(" [*] 깃허브 웹사이트에 현재 호스트 주소를 자동 등록 중...", flush=True)
+        update_cloud_registry("online", public_url)
+
+        local_ip = get_local_ip()
+        local_url = f"http://{local_ip}:8080/index.html"
 
         url_file_path = os.path.join(base_dir, "ONLINE_URL.txt")
         try:
             with open(url_file_path, "w", encoding="utf-8") as f:
-                f.write(f"🌟 GitHub Pages 원클릭 공유 링크:\n{oneclick_github_url}\n\n"
-                        f"🌐 Cloudflare 터널 직행 주소:\n{full_online_url}\n\n"
-                        f"🏠 같은 와이파이 고정 주소:\n{local_url}\n\n"
-                        f"💻 내 컴퓨터 전용 주소:\n{localhost_url}\n")
+                f.write(f"🌟 대양봉교 영구 고정 웹사이트 주소:\n{GITHUB_SITE_URL}\n\n"
+                        f"🌐 실시간 터널 호스트 주소(자동 연동됨):\n{public_url}\n\n"
+                        f"🏠 같은 와이파이 내부 주소:\n{local_url}\n")
         except Exception:
             pass
 
         print("\n" + "=" * 70, flush=True)
-        print("  🎉 가즈아교 글로벌 인터넷 라이브 성전이 성공적으로 열렸습니다! 🎉", flush=True)
+        print("  🎉 가즈아교 글로벌 인터넷 라이브 성전이 완벽하게 가동되었습니다! 🎉", flush=True)
         print("=" * 70, flush=True)
-        print(f" 🌟 [GitHub Pages 원클릭 실시간 공유 링크 (강력 추천!)]:", flush=True)
-        print(f"     👉  {oneclick_github_url}", flush=True)
-        print("     (친구들에게 이 링크를 보내시면 설정 없이 바로 실시간 함께 접속됩니다!)", flush=True)
-        print("-" * 70, flush=True)
-        print(f" 🌐 [호스트 터널 서버 주소 (모달 수동 입력용)]:", flush=True)
-        print(f"     👉  {public_url}", flush=True)
-        print(f" 🏠 [내부 와이파이 고정 링크 (집/사무실 내 스마트폰용)]:", flush=True)
-        print(f"     👉  {local_url}", flush=True)
+        print(f" 🌐 [대양봉교 공식 웹사이트 링크 (영구 고정)]:", flush=True)
+        print(f"     👉  {GITHUB_SITE_URL}", flush=True)
         print("=" * 70, flush=True)
-        print(" 📢 [이용 및 공유 안내]", flush=True)
-        print(" 1. 친구들에게 '🌟 GitHub Pages 원클릭 공유 링크'를 카톡/디코로 보내주세요.", flush=True)
-        print("    주소 입력 없이 고정 깃허브 웹사이트에서 실시간 멀티플레이가 바로 열립니다!", flush=True)
-        print(" 2. 만약 GitHub Pages 사이트에서 '🌐 서버 연동' 버튼을 직접 누르실 경우,", flush=True)
-        print(f"    위의 '호스트 터널 서버 주소({public_url})'를 입력하시면 됩니다.", flush=True)
-        print(" - 이 창을 켜두시는 동안 전 세계 실시간 멀티플레이가 유지됩니다.", flush=True)
-        print(" - 종료하시려면 키보드의 Ctrl + C 또는 창을 닫아주세요.", flush=True)
+        print(" 📢 [이용 안내 - 100% 완전 자동 연동!]", flush=True)
+        print(" - 이제 어떤 주소도 복사하거나 입력하실 필요가 없습니다!", flush=True)
+        print(f" - 본인도, 스마트폰에서도, 친구들에게도 위의 '고정 웹사이트 링크'만 주시면", flush=True)
+        print("   웹페이지가 자동으로 지금 켜진 이 서버를 감지하여 1초 만에 연결됩니다!", flush=True)
+        print(" - 이 검은 창을 켜두시는 동안 전 세계 실시간 멀티플레이가 유지됩니다.", flush=True)
+        print(" - 종료하시려면 키보드의 Ctrl + C 또는 이 창을 닫아주세요.", flush=True)
         print("=" * 70 + "\n", flush=True)
 
-        print(" [3/3] 브라우저에서 GitHub Pages 대성전을 자동으로 실행합니다...", flush=True)
-        webbrowser.open(oneclick_github_url)
+        print(" [3/3] 브라우저에서 대성전 웹사이트를 자동으로 실행합니다...", flush=True)
+        webbrowser.open(GITHUB_SITE_URL)
     else:
-        print("[!] 공인 URL 발급에 지연이 발생했습니다. 로컬 주소로 브라우저를 엽니다.", flush=True)
-        webbrowser.open(localhost_url)
+        print("[!] 공인 URL 발급에 지연이 발생했습니다. 깃허브 웹사이트를 엽니다.", flush=True)
+        webbrowser.open(GITHUB_SITE_URL)
 
     try:
         tunnel_proc.wait()
     except KeyboardInterrupt:
         print("\n[*] 가즈아교 글로벌 서버를 안전하게 종료합니다. 아멘!", flush=True)
-        tunnel_proc.terminate()
+    finally:
+        print(" [*] 클라우드 레지스트리를 오프라인 상태로 전환합니다...", flush=True)
+        update_cloud_registry("offline", "")
+        try:
+            if tunnel_proc:
+                tunnel_proc.terminate()
+        except Exception:
+            pass
         server.stop_server()
 
 if __name__ == "__main__":

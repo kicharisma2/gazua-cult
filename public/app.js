@@ -2766,28 +2766,52 @@ function updateParticles(dt) {
 }
 
 // ==========================================
-// 6. 실시간 시세 (가상화폐: Upbit WebSocket / 국내외 주식: 실제 공식 API 연동 & GitHub Pages 호환)
+// 6. 실시간 시세 및 100% 전자동 호스트 클라우드 레지스트리 연동
 // ==========================================
+const CLOUD_REGISTRY_GIST_URL = 'https://api.github.com/gists/8bd7ddc5c6df9538c8092e1f01c9b2fa';
+STATE.cloudHost = null;
+
+async function autoDiscoverHostServer() {
+  try {
+    const res = await fetch(CLOUD_REGISTRY_GIST_URL + '?_t=' + Date.now());
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.files && data.files['host.json']) {
+      const parsed = JSON.parse(data.files['host.json'].content);
+      if (parsed && parsed.status === 'online' && parsed.host) {
+        const cleanHost = parsed.host.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
+        STATE.cloudHost = cleanHost;
+        console.log('[대양봉교] 클라우드 레지스트리 자동 발견 성공:', cleanHost);
+        return cleanHost;
+      }
+    }
+  } catch (err) {
+    console.warn('[대양봉교] 클라우드 레지스트리 조회 알림:', err);
+  }
+  return null;
+}
+
 function getServerHost() {
   const urlParams = new URLSearchParams(window.location.search);
   const qServer = urlParams.get('server');
-  if (qServer) {
+  if (qServer && !qServer.includes('github.io')) {
     const clean = qServer.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
-    localStorage.setItem('GAZUA_SERVER_HOST', clean);
     return clean;
   }
   const saved = localStorage.getItem('GAZUA_SERVER_HOST');
-  if (saved && saved.trim()) {
+  if (saved && saved.includes('github.io')) {
+    localStorage.removeItem('GAZUA_SERVER_HOST');
+  } else if (saved && saved.trim()) {
     return saved.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
   }
-  // GitHub Pages 등 정적 호스팅 환경일 때는 기본적으로 null (오프라인 모드)
-  if (window.location.host.includes('github.io')) {
-    return null;
+  // GitHub Pages 환경이 아닌 로컬 또는 직접 터널 접속인 경우
+  if (!window.location.host.includes('github.io')) {
+    return window.location.host;
   }
-  return window.location.host;
+  return STATE.cloudHost || null;
 }
 
-function updateServerConnectionStatusBadge(connected, host) {
+function updateServerConnectionStatusBadge(connected, host, stateDetail = '') {
   const iconEl = document.getElementById('serverStatusIcon');
   const textEl = document.getElementById('serverStatusText');
   const btnEl = document.getElementById('btnServerConfig');
@@ -2796,33 +2820,31 @@ function updateServerConnectionStatusBadge(connected, host) {
 
   if (connected) {
     if (iconEl) iconEl.textContent = '🟢';
-    if (textEl) textEl.textContent = '온라인';
+    if (textEl) textEl.textContent = '실시간 연결';
     if (btnEl) {
       btnEl.style.borderColor = '#38ef7d';
       btnEl.style.color = '#38ef7d';
     }
     if (modalBadge) {
-      modalBadge.textContent = '🟢 실시간 온라인 서버 연결됨';
+      modalBadge.textContent = '🟢 실시간 호스트 서버 자동 연결됨';
       modalBadge.style.color = '#38ef7d';
     }
     if (modalHostText) {
-      modalHostText.textContent = `연결 호스트: ${host || window.location.host} (실시간 동기화 중)`;
+      modalHostText.textContent = `연결 호스트: ${host} (자동 감지 완료)`;
     }
   } else {
     if (iconEl) iconEl.textContent = '🟡';
-    if (textEl) textEl.textContent = '단독 모드';
+    if (textEl) textEl.textContent = stateDetail ? `단독 (${stateDetail})` : '단독 모드';
     if (btnEl) {
       btnEl.style.borderColor = '#f5c542';
       btnEl.style.color = '#f5c542';
     }
     if (modalBadge) {
-      modalBadge.textContent = '🟡 단독 오프라인 성전 모드';
+      modalBadge.textContent = '🟡 단독 성전 모드 (호스트 대기 중)';
       modalBadge.style.color = '#f5c542';
     }
     if (modalHostText) {
-      modalHostText.textContent = host 
-        ? `연결 시도 중: ${host} (호스트 서버 실행 대기)` 
-        : 'GitHub Pages 정적 모드로 가동 중 (실행파일 켜고 주소 연동 가능)';
+      modalHostText.textContent = 'PC에서 가즈아교_글로벌서버.exe를 실행하시면 1초 만에 자동으로 실시간 연결됩니다.';
     }
   }
 }
@@ -2848,15 +2870,17 @@ function simulateStaticStockFluctuations() {
 
 async function fetchRealStockPrices() {
   try {
-    const sHost = getServerHost();
-    const isGithub = window.location.host.includes('github.io');
+    let sHost = getServerHost() || STATE.cloudHost;
+    if (!sHost && !window.location.host.includes('github.io')) {
+      sHost = window.location.host;
+    }
 
-    if (!sHost && isGithub) {
+    if (!sHost) {
       simulateStaticStockFluctuations();
       return;
     }
 
-    const apiUrl = sHost ? `https://${sHost}/api/stock-prices` : '/api/stock-prices';
+    const apiUrl = `https://${sHost}/api/stock-prices`;
     const res = await fetch(apiUrl);
     if (!res.ok) {
       simulateStaticStockFluctuations();
@@ -2999,25 +3023,45 @@ function startOfflineCultistBots() {
   }, 10000);
 }
 
-function connectIntegratedMultiplayer() {
-  const host = getServerHost();
-
-  if (!host) {
-    // GitHub Pages 정적 모드 (호스트 주소 미입력 시 단독 모드)
-    startOfflineCultistBots();
-    updateServerConnectionStatusBadge(false, null);
-    return;
-  }
-
-  const isHttps = window.location.protocol === 'https:' || host.includes('trycloudflare.com');
-  const proto = isHttps ? 'wss:' : 'ws:';
-  const wsUrl = `${proto}//${host}/ws`;
+let isConnectingIntegrated = false;
+async function connectIntegratedMultiplayer(overrideHost) {
+  if (isConnectingIntegrated) return;
+  isConnectingIntegrated = true;
 
   try {
+    let host = overrideHost || getServerHost();
+
+    // 호스트 미지정 시 클라우드 레지스트리 자동 감지
+    if (!host) {
+      updateServerConnectionStatusBadge(false, null, '감지 중...');
+      host = await autoDiscoverHostServer();
+    }
+
+    if (!host) {
+      // 호스트 서버가 아직 안 켜진 상태 (단독 오프라인 성전 모드)
+      startOfflineCultistBots();
+      updateServerConnectionStatusBadge(false, null, '대기 중');
+      // 8초마다 호스트 자동 감지 재시도 (PC에서 켜지면 실시간 자동 연결!)
+      clearTimeout(window._autoDiscoverTimer);
+      window._autoDiscoverTimer = setTimeout(() => {
+        isConnectingIntegrated = false;
+        connectIntegratedMultiplayer();
+      }, 8000);
+      return;
+    }
+
+    const isHttps = window.location.protocol === 'https:' || host.includes('trycloudflare.com');
+    const proto = isHttps ? 'wss:' : 'ws:';
+    const wsUrl = `${proto}//${host}/ws`;
+
+    if (STATE.multiWs) {
+      try { STATE.multiWs.close(); } catch {}
+    }
+
     STATE.multiWs = new WebSocket(wsUrl);
 
     STATE.multiWs.onopen = () => {
-      console.log('[가즈아교] 실시간 멀티플레이어 서버 접속 성공:', wsUrl);
+      console.log('[가즈아교] 실시간 멀티플레이어 서버 자동 접속 성공:', wsUrl);
       STATE.isOnlineMultiplayer = true;
       updateServerConnectionStatusBadge(true, host);
 
@@ -3025,6 +3069,11 @@ function connectIntegratedMultiplayer() {
       if (offlineBotsCreated) {
         ['bot_grace', 'bot_pastor', 'bot_ant'].forEach(bid => removeRemotePeer(bid));
         offlineBotsCreated = false;
+      }
+
+      // 호스트 연결 완료 말풍선
+      if (playerCharacter) {
+        showSpeechBubble(playerCharacter, '† 실시간 대성전 호스트 서버와 자동 연결되었습니다! †');
       }
 
       // 입장 패킷 (내 풀 커스텀 외형 및 등급/레벨 포함)
@@ -3054,21 +3103,27 @@ function connectIntegratedMultiplayer() {
     STATE.multiWs.onerror = (err) => {
       console.warn('[가즈아교] 멀티플레이어 연결 오류');
       STATE.isOnlineMultiplayer = false;
-      updateServerConnectionStatusBadge(false, host);
+      updateServerConnectionStatusBadge(false, host, '오류');
       startOfflineCultistBots();
     };
 
     STATE.multiWs.onclose = () => {
       STATE.isOnlineMultiplayer = false;
-      updateServerConnectionStatusBadge(false, host);
+      updateServerConnectionStatusBadge(false, host, '재연결 중');
       startOfflineCultistBots();
-      setTimeout(connectIntegratedMultiplayer, 5000);
+      clearTimeout(window._autoDiscoverTimer);
+      window._autoDiscoverTimer = setTimeout(() => {
+        isConnectingIntegrated = false;
+        connectIntegratedMultiplayer();
+      }, 5000);
     };
 
   } catch (err) {
     console.warn('Integrated WS Init Failed:', err);
-    updateServerConnectionStatusBadge(false, host);
+    updateServerConnectionStatusBadge(false, null, '실패');
     startOfflineCultistBots();
+  } finally {
+    isConnectingIntegrated = false;
   }
 }
 
@@ -4088,63 +4143,15 @@ function setupServerConfigModal() {
   const btn = document.getElementById('btnServerConfig');
   const modal = document.getElementById('modalServerConfig');
   const closeBtn = modal?.querySelector('.modal-close-btn');
-  const input = document.getElementById('inputCustomServer');
-  const btnApply = document.getElementById('btnApplyServer');
-  const btnReset = document.getElementById('btnResetServer');
 
   if (btn && modal) {
     btn.addEventListener('click', () => {
-      const saved = localStorage.getItem('GAZUA_SERVER_HOST') || '';
-      if (input) input.value = saved;
       modal.classList.add('active');
     });
   }
 
   if (closeBtn && modal) {
     closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-  }
-
-  if (btnApply) {
-    btnApply.addEventListener('click', () => {
-      let raw = (input?.value || '').trim();
-      if (raw) {
-        // 혹시 전체 URL(예: ...?server=https://xxxx.trycloudflare.com)을 붙여넣은 경우, server= 값 자동 추출
-        if (raw.includes('server=')) {
-          const m = raw.match(/server=([^&]+)/);
-          if (m && m[1]) raw = decodeURIComponent(m[1]);
-        }
-
-        // 사용자가 GitHub Pages 사이트 화면 주소를 잘못 넣은 경우 친절한 안내 및 차단
-        if (raw.includes('github.io')) {
-          alert(
-            "⚠️ [주의] 입력하신 주소는 웹사이트 화면(GitHub Pages) 주소입니다!\n\n" +
-            "호스트 서버 주소는 내 PC에서 '가즈아교_글로벌서버.exe'를 실행했을 때 " +
-            "검은 콘솔창에 출력되는 'https://[무작위영문].trycloudflare.com' 링크를 넣으셔야 합니다."
-          );
-          return;
-        }
-
-        const clean = raw.replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
-        localStorage.setItem('GAZUA_SERVER_HOST', clean);
-        alert(`🌐 실시간 멀티플레이 서버 연동 주소 설정 완료!\n대상: ${clean}\n실시간 서버 연결을 시작합니다.`);
-        if (STATE.multiWs) STATE.multiWs.close();
-        connectIntegratedMultiplayer();
-      } else {
-        localStorage.removeItem('GAZUA_SERVER_HOST');
-      }
-      modal.classList.remove('active');
-    });
-  }
-
-  if (btnReset) {
-    btnReset.addEventListener('click', () => {
-      localStorage.removeItem('GAZUA_SERVER_HOST');
-      if (input) input.value = '';
-      alert('🔄 서버 연동 주소가 초기화되었습니다.');
-      if (STATE.multiWs) STATE.multiWs.close();
-      connectIntegratedMultiplayer();
-      modal.classList.remove('active');
-    });
   }
 }
 

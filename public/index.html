@@ -630,13 +630,13 @@
     </div>
   </div>
 
-  <!-- 10. 글로벌 서버 연동 설정 모달 -->
+  <!-- 10. 글로벌 서버 연동 상태 모달 -->
   <div id="modalServerConfig" class="modal-overlay">
     <div class="modal-card glass" style="max-width: 480px;">
       <button class="modal-close-btn">&times;</button>
       <div class="modal-header-banner" style="background: linear-gradient(135deg, rgba(56, 239, 125, 0.25), rgba(17, 153, 142, 0.35));">
-        <h2 class="modal-title" style="margin:0 0 4px 0; color:#38ef7d;">🌐 대양봉교 글로벌 서버 연동 설정 🌐</h2>
-        <p class="modal-desc" style="margin:0;">GitHub Pages 웹사이트와 실시간 멀티플레이 서버(Cloudflare 터널/로컬)를 연동합니다.</p>
+        <h2 class="modal-title" style="margin:0 0 4px 0; color:#38ef7d;">🌐 대양봉교 실시간 서버 상태 🌐</h2>
+        <p class="modal-desc" style="margin:0;">복잡한 주소 입력 없이 100% 전자동으로 실시간 서버와 직결됩니다.</p>
       </div>
 
       <div style="background: rgba(0,0,0,0.35); border-radius: 10px; padding: 14px; margin: 14px 0; text-align: left; border: 1px solid rgba(255,255,255,0.1);">
@@ -645,28 +645,21 @@
           <span id="serverModalStatusBadge" style="font-weight: 700; font-size: 13px; color: #38ef7d;">🟢 실시간 서버 연결됨</span>
         </div>
         <div style="font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5;" id="serverModalCurrentHostText">
-          연결 대상: 자동 감지 (동일 도메인)
+          연결 대상: 전자동 클라우드 감지 완료
         </div>
       </div>
 
-      <!-- 초보자 안내 배너 -->
-      <div style="background: rgba(245, 197, 66, 0.1); border: 1px solid rgba(245, 197, 66, 0.3); border-radius: 8px; padding: 10px; margin-bottom: 14px; text-align: left; font-size: 11.5px; line-height: 1.5; color: #fce79a;">
-        📌 <b>호스트 서버 주소란?</b><br>
-        현재 보시는 <b>GitHub Pages 사이트 주소가 아닙니다!</b><br>
-        호스트 컴퓨터에서 <b>'가즈아교_글로벌서버.exe'</b>를 켰을 때 검은 콘솔창에 찍히는 <b>'https://[무작위영문].trycloudflare.com'</b> 주소입니다.
+      <!-- 전자동 시스템 안내 배너 -->
+      <div style="background: rgba(56, 239, 125, 0.1); border: 1px solid rgba(56, 239, 125, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 14px; text-align: left; font-size: 12px; line-height: 1.6; color: #bbf7d0;">
+        ✨ <b>완전 자동 연동 시스템 가동 중!</b><br>
+        - 이제 어떤 주소도 복사하거나 입력하실 필요가 없습니다.<br>
+        - PC에서 <b>'가즈아교_글로벌서버.exe'</b>를 켜두시기만 하면, 이 웹사이트가 <b>알아서 1초 만에 감지하여 실시간 멀티플레이로 자동 연결</b>됩니다.<br>
+        - 스마트폰에서도 그냥 이 사이트 주소로 들어오시면 자동으로 방금 켜진 서버로 연결됩니다!
       </div>
 
-      <div class="form-group" style="text-align: left;">
-        <label class="form-label" style="font-size: 13px; color: var(--gold);">호스트 터널 서버 주소 입력:</label>
-        <input type="text" id="inputCustomServer" class="form-input" placeholder="예: https://abc-def-123.trycloudflare.com">
-      </div>
-
-      <div style="display:flex; gap: 8px; margin-top: 16px;">
-        <button id="btnApplyServer" class="action-btn" style="flex:2; background: linear-gradient(135deg, #11998e, #38ef7d); color:#000; font-weight:800;">
-          🚀 서버 연동하기
-        </button>
-        <button id="btnResetServer" class="action-btn" style="flex:1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
-          🔄 기본값 복원
+      <div style="margin-top: 14px;">
+        <button class="action-btn" onclick="document.getElementById('modalServerConfig').classList.remove('active')" style="background: linear-gradient(135deg, #11998e, #38ef7d); color:#000; font-weight:800;">
+          확인 (은혜로 아멘!)
         </button>
       </div>
     </div>
