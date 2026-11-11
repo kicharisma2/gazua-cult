@@ -1920,10 +1920,18 @@ function setupMovementControls() {
     if (['d', 'arrowright'].includes(key)) STATE.keys.d = false;
   });
 
-  // 점프 버튼 이벤트 바인딩
+  // 점프 버튼 이벤트 바인딩 (PC 툴바 & 모바일 전용 우측 플로팅 점프 버튼)
   const jumpBtn = document.getElementById('btnJumpAction');
   if (jumpBtn) {
     jumpBtn.addEventListener('click', () => {
+      triggerPlayerJump();
+    });
+  }
+
+  const mJumpBtn = document.getElementById('mobileJumpFloatingBtn');
+  if (mJumpBtn) {
+    mJumpBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
       triggerPlayerJump();
     });
   }
@@ -2772,21 +2780,39 @@ const CLOUD_REGISTRY_GIST_URL = 'https://api.github.com/gists/8bd7ddc5c6df9538c8
 STATE.cloudHost = null;
 
 async function autoDiscoverHostServer() {
+  // 1차 시도: API Rate Limit 없는 Gist Raw URL (모바일 및 전 세계 100% 실시간 무제한)
   try {
-    const res = await fetch(CLOUD_REGISTRY_GIST_URL + '?_t=' + Date.now());
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (data.files && data.files['host.json']) {
-      const parsed = JSON.parse(data.files['host.json'].content);
+    const rawRes = await fetch('https://gist.githubusercontent.com/kicharisma2/8bd7ddc5c6df9538c8092e1f01c9b2fa/raw/host.json?_t=' + Date.now());
+    if (rawRes.ok) {
+      const parsed = await rawRes.json();
       if (parsed && parsed.status === 'online' && parsed.host) {
         const cleanHost = parsed.host.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
         STATE.cloudHost = cleanHost;
-        console.log('[대양봉교] 클라우드 레지스트리 자동 발견 성공:', cleanHost);
+        console.log('[대양봉교] Gist Raw 호스트 자동 발견 성공:', cleanHost);
         return cleanHost;
       }
     }
+  } catch (e1) {
+    console.warn('[대양봉교] Gist Raw 조회 알림:', e1);
+  }
+
+  // 2차 시도: GitHub Gist REST API
+  try {
+    const res = await fetch('https://api.github.com/gists/8bd7ddc5c6df9538c8092e1f01c9b2fa?_t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (data.files && data.files['host.json']) {
+        const parsed = JSON.parse(data.files['host.json'].content);
+        if (parsed && parsed.status === 'online' && parsed.host) {
+          const cleanHost = parsed.host.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
+          STATE.cloudHost = cleanHost;
+          console.log('[대양봉교] Gist API 호스트 자동 발견 성공:', cleanHost);
+          return cleanHost;
+        }
+      }
+    }
   } catch (err) {
-    console.warn('[대양봉교] 클라우드 레지스트리 조회 알림:', err);
+    console.warn('[대양봉교] Gist API 조회 알림:', err);
   }
   return null;
 }

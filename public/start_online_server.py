@@ -37,15 +37,29 @@ def update_cloud_registry(status, host=""):
             "host": host,
             "updated": int(time.time())
         })
+        # 1. 로컬 host.json 파일에도 보관
+        base_dir = get_base_dir()
+        try:
+            with open(os.path.join(base_dir, "host.json"), "w", encoding="utf-8") as f:
+                f.write(payload)
+        except Exception:
+            pass
+
+        # 2. GitHub Gist에 실시간 클라우드 등록 (shell=True 필수)
         p = subprocess.Popen(
             ["gh", "gist", "edit", GIST_ID, "-f", "host.json", "-"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
+            shell=True
         )
-        p.communicate(payload)
-        return True
+        out, err = p.communicate(payload)
+        if p.returncode == 0:
+            return True
+        else:
+            print(f"[!] Gist 등록 경고: {err.strip()}", flush=True)
+            return False
     except Exception as e:
         print(f"[!] 클라우드 자동 등록 알림: {e}", flush=True)
         return False
