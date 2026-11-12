@@ -120,6 +120,14 @@
       </div>
     </div>
 
+    <!-- 2-1. 실시간 돌발 성령 부흥 이벤트 배너 -->
+    <div id="holyEventBanner" class="holy-event-banner glass clickable" style="display:none;" title="진행 중인 특별 성령 이벤트에 즉시 참여합니다!">
+      <span class="event-glow-badge">🚨 돌발 부흥</span>
+      <span id="holyEventTitle" class="event-title-text">성령 불기둥 폭발 특별 집회</span>
+      <span id="holyEventTimer" class="event-timer-badge">02:00</span>
+      <button id="btnJoinHolyEvent" class="event-join-btn">즉시참여 ➔</button>
+    </div>
+
     <!-- 3. 우측 플로팅 이벤트 / 미니게임 사이드바 -->
     <aside class="event-sidebar clickable">
       <button id="btnOpenMissionsSide" class="event-btn glass" style="border: 1px solid #f5c542;" title="은혜 미션을 완수하여 신도 등급과 호칭을 승급시킵니다">
@@ -220,10 +228,46 @@
           <span class="btn-text">영끌 헌금</span>
         </button>
 
-        <!-- 부흥회 박수 -->
-        <button id="btnClap" class="prayer-btn" title="신나게 찬양 박수를 칩니다">
+        <!-- 부흥회 박수 (정면 박수) -->
+        <button id="btnClap" class="prayer-btn" title="앞으로 두 손을 모아 신나게 찬양 박수를 칩니다">
           <span class="btn-icon">👏</span>
           <span class="btn-text">찬양 박수</span>
+        </button>
+
+        <!-- 간절 기도 (석고대죄) -->
+        <button id="btnKneel" class="prayer-btn" style="border-color:#a855f7; color:#d8b4fe;" title="무릎을 꿇고 엎드려 제발 본전만 찾게 해달라고 간절히 기도합니다">
+          <span class="btn-icon">🙏</span>
+          <span class="btn-text">간절 기도</span>
+        </button>
+
+        <!-- 성령 댄스 (떡상 댄스) -->
+        <button id="btnDance" class="prayer-btn" style="border-color:#ec4899; color:#fbcfe8;" title="온몸을 들썩이며 신나게 떡상 부흥회 댄스를 춥니다">
+          <span class="btn-icon">🕺</span>
+          <span class="btn-text">성령 댄스</span>
+        </button>
+
+        <!-- 양봉 승천 (불기둥 소환) -->
+        <button id="btnMegaBull" class="prayer-btn primary" title="발밑에서 황금 양봉 불기둥이 솟구치며 펄쩍 승천합니다">
+          <span class="btn-icon">🔥</span>
+          <span class="btn-text">양봉 승천</span>
+        </button>
+
+        <!-- 돈복사 축도 -->
+        <button id="btnMoneyBless" class="prayer-btn gold" title="두 손을 펼쳐 주변 모든 신도들에게 돈복사 축복을 내립니다">
+          <span class="btn-icon">💸</span>
+          <span class="btn-text">돈복사 축도</span>
+        </button>
+
+        <!-- 떡상 포효 (사자후) -->
+        <button id="btnShout" class="prayer-btn" style="border-color:#f97316; color:#fed7aa;" title="가슴을 치며 하늘을 향해 가즈아아아 포효를 외칩니다">
+          <span class="btn-icon">🦁</span>
+          <span class="btn-text">떡상 포효</span>
+        </button>
+
+        <!-- 공중부양 승천 -->
+        <button id="btnLevitate" class="prayer-btn" style="border-color:#06b6d4; color:#a5f3fc;" title="날개를 펄럭이며 허공으로 둥실 떠올라 회전합니다">
+          <span class="btn-icon">🪽</span>
+          <span class="btn-text">공중 부양</span>
         </button>
 
         <!-- 성수 퇴마 -->

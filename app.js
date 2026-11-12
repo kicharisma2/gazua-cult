@@ -195,6 +195,10 @@ let neonCrossMesh, crossLight;
 let megaCandleMesh = null, megaCandleLight = null;
 let throneMesh = null;
 let bullStatueGroup = null;
+let whaleStatueGroup = null;
+let candleAltarGroup = null;
+let coinPondGroup = null;
+let revivalCircleGroup = null;
 let bossGroup = null, bossHpBarMesh = null, bossHpFillMesh = null;
 let goldAntMesh = null;
 let playerCharacter;
@@ -955,6 +959,166 @@ function buildMegachurch() {
   churchGroup.add(railing);
 
   createSpaceSign(0, 5.2, 22.5, "👑 2층 세력 영생 VIP 성가대석", 0xf5c542, churchGroup);
+
+  // ----------------------------------------------------
+  // 6. [북관: 100억 슈퍼고래 영생 참배원] (Whale Sanctuary)
+  // ----------------------------------------------------
+  const whaleSanctuaryFloor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.4, 14), obsidianMat);
+  whaleSanctuaryFloor.position.set(0, 0.2, -26);
+  churchGroup.add(whaleSanctuaryFloor);
+  floorMeshes.push(whaleSanctuaryFloor);
+
+  // 황금 고래 3D 조각상
+  const whaleGroup = new THREE.Group();
+  whaleGroup.position.set(0, 2.8, -26);
+
+  // 고래 몸체
+  const whaleBody = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 2.3, 5.8, 16), goldMat);
+  whaleBody.rotation.x = Math.PI / 2;
+  whaleGroup.add(whaleBody);
+
+  // 고래 머리 (둥근 반구)
+  const whaleHead = new THREE.Mesh(new THREE.SphereGeometry(1.45, 16, 16), goldMat);
+  whaleHead.position.set(0, 0, 2.9);
+  whaleGroup.add(whaleHead);
+
+  // 고래 꼬리 지느러미
+  const whaleTail = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 1.2), goldMat);
+  whaleTail.position.set(0, 0.4, -3.2);
+  whaleTail.rotation.x = 0.3;
+  whaleGroup.add(whaleTail);
+
+  // 등 지느러미
+  const dorsalFin = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.2, 4), goldMat);
+  dorsalFin.position.set(0, 1.8, 0.2);
+  dorsalFin.rotation.x = -0.4;
+  whaleGroup.add(dorsalFin);
+
+  // 고래 숨구멍 황금 분수 파티클 조명
+  const whaleLight = new THREE.PointLight(0xf5c542, 2.8, 22);
+  whaleLight.position.set(0, 3.5, 1.2);
+  whaleGroup.add(whaleLight);
+
+  whaleStatueGroup = whaleGroup;
+  churchGroup.add(whaleGroup);
+  createSpaceSign(0, 5.8, -26, "🐋 [북관] 100억 슈퍼고래 영생 참배원 (터치하여 고래 오라 받기!)", 0xf5c542, churchGroup);
+
+  // ----------------------------------------------------
+  // 7. [서관: 성스러운 촛불 봉헌 제단] (Candle Altar)
+  // ----------------------------------------------------
+  const candleAltarGroupLocal = new THREE.Group();
+  candleAltarGroupLocal.position.set(-28, 0, -8);
+
+  const candleAltarTable = new THREE.Mesh(new THREE.BoxGeometry(7, 1.2, 3), woodMat);
+  candleAltarTable.position.y = 0.6;
+  candleAltarGroupLocal.add(candleAltarTable);
+
+  const candleFlameMat = new THREE.MeshBasicMaterial({ color: 0xff4422 });
+  const candleWaxMat = new THREE.MeshStandardMaterial({ color: 0xfff0c0, roughness: 0.3 });
+
+  // 12개의 반짝이는 성스러운 촛대
+  for (let ci = -5; ci <= 5; ci += 2) {
+    for (let cj = -1; cj <= 1; cj += 2) {
+      const wax = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.6, 8), candleWaxMat);
+      wax.position.set(ci * 0.55, 1.5, cj * 0.6);
+      candleAltarGroupLocal.add(wax);
+
+      const flame = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), candleFlameMat);
+      flame.position.set(ci * 0.55, 1.88, cj * 0.6);
+      candleAltarGroupLocal.add(flame);
+    }
+  }
+
+  const candleLight = new THREE.PointLight(0xff5522, 2.2, 16);
+  candleLight.position.set(0, 2.5, 0);
+  candleAltarGroupLocal.add(candleLight);
+
+  candleAltarGroup = candleAltarGroupLocal;
+  churchGroup.add(candleAltarGroupLocal);
+  createSpaceSign(-28, 3.6, -8, "🕯️ [서관] 떡상 촛불 봉헌 제단 (터치하여 소망과 평단가 봉헌!)", 0xf59e0b, churchGroup);
+
+  // ----------------------------------------------------
+  // 8. [남관: 영끌 행운의 코인 연못] (Lucky Coin Pond)
+  // ----------------------------------------------------
+  const coinPondGroupLocal = new THREE.Group();
+  coinPondGroupLocal.position.set(0, 0, 64);
+
+  // 연못 외곽 림
+  const pondRim = new THREE.Mesh(new THREE.TorusGeometry(6.5, 0.4, 16, 32), goldMat);
+  pondRim.rotation.x = Math.PI / 2;
+  pondRim.position.y = 0.25;
+  coinPondGroupLocal.add(pondRim);
+
+  // 푸른 청록색 성스러운 수면
+  const waterMat = new THREE.MeshStandardMaterial({
+    color: 0x06b6d4,
+    roughness: 0.1,
+    metalness: 0.8,
+    transparent: true,
+    opacity: 0.75
+  });
+  const pondWater = new THREE.Mesh(new THREE.CylinderGeometry(6.3, 6.3, 0.15, 32), waterMat);
+  pondWater.position.y = 0.15;
+  coinPondGroupLocal.add(pondWater);
+
+  // 연못 바닥의 반짝이는 황금 동전들
+  const pondCoinMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.95, roughness: 0.2 });
+  for (let cidx = 0; cidx < 24; cidx++) {
+    const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.06, 12), pondCoinMat);
+    const r = Math.random() * 4.5;
+    const theta = Math.random() * Math.PI * 2;
+    coin.position.set(Math.cos(theta) * r, 0.16, Math.sin(theta) * r);
+    coin.rotation.x = Math.random() * 0.4;
+    coin.rotation.z = Math.random() * 0.4;
+    coinPondGroupLocal.add(coin);
+  }
+
+  const pondLight = new THREE.PointLight(0x06b6d4, 2.0, 16);
+  pondLight.position.set(0, 2.0, 0);
+  coinPondGroupLocal.add(pondLight);
+
+  coinPondGroup = coinPondGroupLocal;
+  churchGroup.add(coinPondGroupLocal);
+  createSpaceSign(0, 3.8, 64, "🪙 [남관] 영끌 행운의 코인 연못 (터치하여 동전 던지고 계시 받기!)", 0x38bdf8, churchGroup);
+
+  // ----------------------------------------------------
+  // 9. [동관: 부흥회 단체 통성기도 성령존] (Revival Holy Zone)
+  // ----------------------------------------------------
+  const revivalCircleGroupLocal = new THREE.Group();
+  revivalCircleGroupLocal.position.set(30, 0, -6);
+
+  const revivalFloorMat = new THREE.MeshStandardMaterial({
+    color: 0x4a0e17,
+    emissive: 0x880011,
+    emissiveIntensity: 0.6,
+    roughness: 0.4
+  });
+  const revivalFloor = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 6.2, 0.2, 32), revivalFloorMat);
+  revivalFloor.position.y = 0.1;
+  revivalCircleGroupLocal.add(revivalFloor);
+  floorMeshes.push(revivalFloor);
+
+  // 4방위 성령 횃불 기둥
+  const torchMat = new THREE.MeshStandardMaterial({ color: 0x1f1a1d, roughness: 0.5 });
+  const torchFlameMat = new THREE.MeshBasicMaterial({ color: 0xff3300 });
+  const torchCoords = [{ x: -4.5, z: 0 }, { x: 4.5, z: 0 }, { x: 0, z: -4.5 }, { x: 0, z: 4.5 }];
+  torchCoords.forEach(tc => {
+    const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 2.5, 12), torchMat);
+    pillar.position.set(tc.x, 1.25, tc.z);
+    revivalCircleGroupLocal.add(pillar);
+
+    const flame = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), torchFlameMat);
+    flame.position.set(tc.x, 2.7, tc.z);
+    revivalCircleGroupLocal.add(flame);
+  });
+
+  const revivalLight = new THREE.PointLight(0xff334b, 3.0, 20);
+  revivalLight.position.set(0, 3.0, 0);
+  revivalCircleGroupLocal.add(revivalLight);
+
+  revivalCircleGroup = revivalCircleGroupLocal;
+  churchGroup.add(revivalCircleGroupLocal);
+  createSpaceSign(30, 4.2, -6, "🔥 [동관] 전 신도 합심 통성기도 성령존 (진입 시 양봉 게이지 2배 가속!)", 0xff334b, churchGroup);
 }
 
 // 3D 텍스트 간판 생성 헬퍼
@@ -1902,6 +2066,18 @@ function setupMovementControls() {
       triggerPlayerJump();
     }
 
+    // 숫자키 1~0 신앙 액션 단축키
+    if (key === '1') { triggerTonguePrayer(); handled = true; }
+    else if (key === '2') { triggerSlainInSpirit(); handled = true; }
+    else if (key === '3') { triggerOffering(); handled = true; }
+    else if (key === '4') { triggerClap(); handled = true; }
+    else if (key === '5') { triggerKneel(); handled = true; }
+    else if (key === '6') { triggerDance(); handled = true; }
+    else if (key === '7') { triggerMegaBull(); handled = true; }
+    else if (key === '8') { triggerMoneyBless(); handled = true; }
+    else if (key === '9') { triggerShout(); handled = true; }
+    else if (key === '0') { triggerLevitate(); handled = true; }
+
     if (handled) {
       e.preventDefault();
       STATE.clickTargetPos = null;
@@ -1970,6 +2146,10 @@ function setupMovementControls() {
     // 1. 성전 특수 랜드마크 클릭 상호작용 (황소 성물상, 마왕 보스, 교주 왕좌, 숨겨진 황금 개미)
     const interactTargets = [];
     if (bullStatueGroup) interactTargets.push(bullStatueGroup);
+    if (whaleStatueGroup) interactTargets.push(whaleStatueGroup);
+    if (candleAltarGroup) interactTargets.push(candleAltarGroup);
+    if (coinPondGroup) interactTargets.push(coinPondGroup);
+    if (revivalCircleGroup) interactTargets.push(revivalCircleGroup);
     if (bossGroup && bossGroup.visible) interactTargets.push(bossGroup);
     if (throneMesh) interactTargets.push(throneMesh);
     if (goldAntMesh) interactTargets.push(goldAntMesh);
@@ -1982,6 +2162,18 @@ function setupMovementControls() {
       }
       if (root === bullStatueGroup) {
         interactWithBullStatue();
+        return;
+      } else if (root === whaleStatueGroup) {
+        interactWithWhaleStatue();
+        return;
+      } else if (root === candleAltarGroup) {
+        interactWithCandleAltar();
+        return;
+      } else if (root === coinPondGroup) {
+        interactWithCoinPond();
+        return;
+      } else if (root === revivalCircleGroup) {
+        interactWithRevivalCircle();
         return;
       } else if (root === bossGroup) {
         sendBossHit(12);
@@ -2411,6 +2603,50 @@ function checkProximityInteractions() {
     }
   }
 
+  // 5. 북관 100억 슈퍼고래 영생 참배원 (x ≈ 0, z ≈ -26)
+  if (!target && whaleStatueGroup) {
+    const distWhale = Math.hypot(px - 0, pz - (-26));
+    if (distWhale < 8.0) {
+      target = 'whale';
+      icon = '🐋';
+      text = '100억 슈퍼고래 영생 참배! (+150 EXP)';
+      isGold = true;
+    }
+  }
+
+  // 6. 서관 성스러운 촛불 봉헌 제단 (x ≈ -28, z ≈ -8)
+  if (!target && candleAltarGroup) {
+    const distCandle = Math.hypot(px - (-28), pz - (-8));
+    if (distCandle < 7.0) {
+      target = 'candle';
+      icon = '🕯️';
+      text = '떡상 촛불 봉헌 제단 (소망/평단가 봉헌)';
+      isGold = true;
+    }
+  }
+
+  // 7. 남관 영끌 행운의 코인 연못 (x ≈ 0, z ≈ 64)
+  if (!target && coinPondGroup) {
+    const distPond = Math.hypot(px - 0, pz - 64);
+    if (distPond < 8.5) {
+      target = 'coin_pond';
+      icon = '🪙';
+      text = '영끌 행운의 코인 연못 (동전 던져 소망 빌기)';
+      isGold = true;
+    }
+  }
+
+  // 8. 동관 부흥회 통성기도 성령존 (x ≈ 30, z ≈ -6)
+  if (!target && revivalCircleGroup) {
+    const distRevival = Math.hypot(px - 30, pz - (-6));
+    if (distRevival < 7.5) {
+      target = 'revival_zone';
+      icon = '🔥';
+      text = '부흥회 통성기도 성령존 (양봉 게이지 폭발!)';
+      isGold = true;
+    }
+  }
+
   currentInteractTarget = target;
 
   if (target) {
@@ -2443,6 +2679,14 @@ function triggerProximityAction() {
     interactWithGoldAnt();
   } else if (currentInteractTarget === 'throne') {
     interactWithThrone();
+  } else if (currentInteractTarget === 'whale') {
+    interactWithWhaleStatue();
+  } else if (currentInteractTarget === 'candle') {
+    interactWithCandleAltar();
+  } else if (currentInteractTarget === 'coin_pond') {
+    interactWithCoinPond();
+  } else if (currentInteractTarget === 'revival_zone') {
+    interactWithRevivalCircle();
   }
 }
 
@@ -2595,14 +2839,86 @@ function updateCultistAnimation(c, dt, t) {
       break;
 
     case 'clap':
-      // [찬양 박수]: 두 손을 앞으로 모아 빠르게 짝짝짝
+      // [찬양 박수]: 두 손을 앞으로 모아 가슴 앞에서 빠르게 짝! 짝! 짝! (정면 박수)
       c.group.rotation.x = THREE.MathUtils.lerp(c.group.rotation.x, 0.05, dt * 8);
-      c.group.position.y = currentBaseFloor + Math.abs(Math.sin(t * 10)) * 0.08;
-      c.headGroup.rotation.x = Math.sin(t * 10) * 0.1;
-      c.armL.rotation.x = Math.PI / 3;
-      c.armR.rotation.x = Math.PI / 3;
-      c.armL.rotation.z = Math.sin(t * 22) * 0.45 - 0.25;
-      c.armR.rotation.z = -Math.sin(t * 22) * 0.45 + 0.25;
+      c.group.position.y = currentBaseFloor + Math.abs(Math.sin(t * 12)) * 0.07;
+      c.headGroup.rotation.x = Math.sin(t * 12) * 0.1;
+      c.armL.rotation.x = -Math.PI * 0.42; // 앞으로 나란히 뻗음
+      c.armR.rotation.x = -Math.PI * 0.42;
+      c.armL.rotation.y = 0.55;
+      c.armR.rotation.y = -0.55;
+      c.armL.rotation.z = Math.sin(t * 22) * 0.4 - 0.2;
+      c.armR.rotation.z = -Math.sin(t * 22) * 0.4 + 0.2;
+      break;
+
+    case 'kneel':
+      // [간절 기도 (석고대죄)]: 무릎 꿇고 엎드려 제발 본전만 찾게 해달라고 애원
+      c.group.position.y = THREE.MathUtils.lerp(c.group.position.y, currentBaseFloor - 0.18, dt * 8);
+      c.group.rotation.x = THREE.MathUtils.lerp(c.group.rotation.x, 0.45, dt * 8);
+      c.headGroup.rotation.x = THREE.MathUtils.lerp(c.headGroup.rotation.x, 0.5, dt * 8);
+      c.armL.rotation.x = -0.65 + Math.sin(t * 8) * 0.08;
+      c.armR.rotation.x = -0.65 + Math.sin(t * 8) * 0.08;
+      c.armL.rotation.y = 0.4;
+      c.armR.rotation.y = -0.4;
+      c.armL.rotation.z = -0.25;
+      c.armR.rotation.z = 0.25;
+      break;
+
+    case 'dance':
+      // [성령 댄스 / 떡상 댄스]: 엉덩이를 씰룩이며 덩실덩실 신나는 떡상 댄스
+      c.group.position.y = currentBaseFloor + Math.abs(Math.sin(t * 12)) * 0.14;
+      c.group.rotation.z = Math.sin(t * 12) * 0.22;
+      c.group.rotation.y += dt * 1.5;
+      c.headGroup.rotation.z = -Math.sin(t * 12) * 0.15;
+      c.armL.rotation.x = Math.sin(t * 12) * 1.1 - 0.5;
+      c.armR.rotation.x = -Math.sin(t * 12) * 1.1 - 0.5;
+      c.armL.rotation.z = -0.4;
+      c.armR.rotation.z = 0.4;
+      break;
+
+    case 'megabull':
+      // [양봉 승천]: 발밑에서 불기둥이 솟구치며 하늘 높이 펄쩍 솟아오름
+      c.group.position.y = currentBaseFloor + Math.abs(Math.sin(t * 7)) * 0.85;
+      c.headGroup.rotation.x = -0.5;
+      c.armL.rotation.x = -Math.PI * 0.95;
+      c.armR.rotation.x = -Math.PI * 0.95;
+      c.armL.rotation.z = -0.25;
+      c.armR.rotation.z = 0.25;
+      c.group.rotation.y += dt * 3.5;
+      break;
+
+    case 'moneybless':
+      // [돈복사 축도]: 두 손을 넓게 펼쳐 황금 코인비를 뿌리는 축도
+      c.group.position.y = currentBaseFloor + Math.sin(t * 3) * 0.05;
+      c.headGroup.rotation.x = Math.sin(t * 3) * 0.1;
+      c.armL.rotation.x = -Math.PI * 0.45;
+      c.armR.rotation.x = -Math.PI * 0.45;
+      c.armL.rotation.y = 0.7;
+      c.armR.rotation.y = -0.7;
+      c.armL.rotation.z = -0.55 + Math.sin(t * 10) * 0.1;
+      c.armR.rotation.z = 0.55 - Math.sin(t * 10) * 0.1;
+      break;
+
+    case 'shout':
+      // [떡상 포효 (사자후)]: 가슴을 치며 하늘을 향해 가즈아아아 샤우팅
+      c.group.position.y = currentBaseFloor + (Math.random() - 0.5) * 0.05;
+      c.headGroup.rotation.x = -0.55;
+      c.armL.rotation.x = -0.85 + Math.sin(t * 18) * 0.35;
+      c.armR.rotation.x = -0.85 - Math.sin(t * 18) * 0.35;
+      c.armL.rotation.y = 0.4;
+      c.armR.rotation.y = -0.4;
+      c.group.rotation.z = (Math.random() - 0.5) * 0.1;
+      break;
+
+    case 'levitate':
+      // [공중부양 승천]: 날개를 파닥이며 바닥에서 둥실 떠올라 신비롭게 회전
+      c.group.position.y = currentBaseFloor + 1.5 + Math.sin(t * 3) * 0.25;
+      c.headGroup.rotation.x = -0.2;
+      c.armL.rotation.x = -0.4;
+      c.armR.rotation.x = -0.4;
+      c.armL.rotation.z = -0.8;
+      c.armR.rotation.z = 0.8;
+      c.group.rotation.y += dt * 2.0;
       break;
 
     case 'offering':
@@ -3963,6 +4279,149 @@ function interactWithBullStatue() {
   }, 60000);
 }
 
+// ------------------------------------------
+// 4대 신규 성지 상호작용
+// ------------------------------------------
+function interactWithWhaleStatue() {
+  addExp(150);
+  addMissionProgress('bull', 1);
+  if (playerCharacter) {
+    showSpeechBubble(playerCharacter, '🐋 † 100억 슈퍼고래의 성령 기운을 영접했습니다! (+150 EXP) †');
+  }
+  spawnBlessingFire();
+  spawnOfferingCoins(playerCharacter ? playerCharacter.group.position : { x: 0, y: 1, z: -26 });
+  if (window.gajaAudio) window.gajaAudio.playLevelUpSfx();
+  addTestimonyToFeed(STATE.playerName, '북관 100억 슈퍼고래 영생 참배원에서 고래 기운을 전수받았습니다!', 'long');
+
+  if (STATE.multiWs && STATE.multiWs.readyState === WebSocket.OPEN) {
+    STATE.multiWs.send(JSON.stringify({
+      type: 'chat_action',
+      name: STATE.playerName,
+      action: 'whale_bless',
+      text: '북관 100억 슈퍼고래의 성령 축복을 받았습니다!'
+    }));
+  }
+}
+
+function interactWithCandleAltar() {
+  if (playerCharacter) {
+    showSpeechBubble(playerCharacter, '🕯️ † 성스러운 떡상 촛불 봉헌대에 도착했습니다! †');
+  }
+  if (window.gajaAudio) window.gajaAudio.playAmenBellSfx();
+  openCandleModal();
+}
+
+function interactWithCoinPond() {
+  addExp(100);
+  triggerRitualAction(6, '연못 코인 봉헌');
+  spawnOfferingCoins(playerCharacter ? playerCharacter.group.position : { x: 0, y: 1, z: 64 });
+  if (window.gajaAudio) window.gajaAudio.playOfferingSfx();
+  if (playerCharacter) {
+    showSpeechBubble(playerCharacter, '🪙 † 영끌 행운의 연못에 코인을 던졌습니다! 떡상 계시 축복 임재! †');
+  }
+  addTestimonyToFeed(STATE.playerName, '남관 영끌 코인 연못에 동전을 던져 떡상 계시 행운을 기원했습니다!', 'long');
+
+  if (STATE.multiWs && STATE.multiWs.readyState === WebSocket.OPEN) {
+    STATE.multiWs.send(JSON.stringify({
+      type: 'chat_action',
+      name: STATE.playerName,
+      action: 'coin_pond',
+      text: '남관 행운의 연못에 동전을 던져 소망을 빌었습니다!'
+    }));
+  }
+}
+
+function interactWithRevivalCircle() {
+  triggerRitualAction(12, '성령존 통성기도');
+  if (playerCharacter) {
+    playerCharacter.state = 'tongue';
+    playerCharacter.stateTimer = 5.0;
+    showSpeechBubble(playerCharacter, '🔥 † 부흥회 성령 강림존! 전 신도 양봉 게이지가 대폭발합니다! †');
+  }
+  spawnBlessingFire();
+  if (window.gajaAudio) window.gajaAudio.playAmenBellSfx();
+  addTestimonyToFeed(STATE.playerName, '동관 통성기도 성령존에 진입하여 온몸으로 방언 기도를 올립니다!', 'long');
+
+  sendMultiplayerAction('tongue', '동관 성령존에서 강력한 통성기도를 올립니다!');
+}
+
+// ------------------------------------------
+// 신규 액션 트리거 핸들러
+// ------------------------------------------
+function triggerKneel() {
+  if (!playerCharacter) return;
+  playerCharacter.state = 'kneel';
+  playerCharacter.stateTimer = 4.0;
+  if (window.gajaAudio) window.gajaAudio.playAmenBellSfx();
+  triggerRitualAction(4, '간절 석고대죄');
+  const msg = "주여.. 제발 원금만 찾게 하소서! 아멘! 🙏";
+  showSpeechBubble(playerCharacter, msg);
+  addTestimonyToFeed(playerCharacter.name, "무릎 꿇고 엎드려 간절하게 본전 구원을 빌었습니다.", "long");
+  sendMultiplayerAction('kneel', msg);
+}
+
+function triggerDance() {
+  if (!playerCharacter) return;
+  playerCharacter.state = 'dance';
+  playerCharacter.stateTimer = 4.5;
+  if (window.gajaAudio) window.gajaAudio.playClapSfx();
+  triggerRitualAction(5, '성령 떡상 댄스');
+  const msg = "떡상 부흥회 댄스 가즈아아아! 💃🕺";
+  showSpeechBubble(playerCharacter, msg);
+  addTestimonyToFeed(playerCharacter.name, "흥겨운 떡상 부흥회 성령 댄스를 춥니다!", "long");
+  sendMultiplayerAction('dance', msg);
+}
+
+function triggerMegaBull() {
+  if (!playerCharacter) return;
+  playerCharacter.state = 'megabull';
+  playerCharacter.stateTimer = 3.5;
+  spawnOfferingCoins(playerCharacter.group.position);
+  if (window.gajaAudio) window.gajaAudio.playAmenBellSfx();
+  triggerRitualAction(10, '양봉 승천');
+  const msg = "솟구쳐라 황금 양봉 불기둥이여! 🚀🔥";
+  showSpeechBubble(playerCharacter, msg);
+  addTestimonyToFeed(playerCharacter.name, "황금 양봉 불기둥을 소환하여 승천을 선포했습니다!", "long");
+  sendMultiplayerAction('megabull', msg);
+}
+
+function triggerMoneyBless() {
+  if (!playerCharacter) return;
+  playerCharacter.state = 'moneybless';
+  playerCharacter.stateTimer = 4.0;
+  spawnOfferingCoins(playerCharacter.group.position);
+  if (window.gajaAudio) window.gajaAudio.playOfferingSfx();
+  triggerRitualAction(7, '돈복사 대축도');
+  const msg = "온 성전에 돈복사의 은혜가 넘쳐날지어다! 💸✨";
+  showSpeechBubble(playerCharacter, msg);
+  addTestimonyToFeed(playerCharacter.name, "모든 신도에게 100배 돈복사 축복을 내렸습니다!", "long");
+  sendMultiplayerAction('moneybless', msg);
+}
+
+function triggerShout() {
+  if (!playerCharacter) return;
+  playerCharacter.state = 'shout';
+  playerCharacter.stateTimer = 3.0;
+  if (window.gajaAudio) window.gajaAudio.playAmenBellSfx();
+  triggerRitualAction(6, '떡상 사자후');
+  const msg = "가즈아아아아아아아아아아아아!! 🦁🔥";
+  showSpeechBubble(playerCharacter, msg);
+  addTestimonyToFeed(playerCharacter.name, "하늘이 떠나가도록 떡상 사자후를 외쳤습니다!", "long");
+  sendMultiplayerAction('shout', msg);
+}
+
+function triggerLevitate() {
+  if (!playerCharacter) return;
+  playerCharacter.state = 'levitate';
+  playerCharacter.stateTimer = 5.0;
+  if (window.gajaAudio) window.gajaAudio.playAmenBellSfx();
+  triggerRitualAction(8, '공중부양 승천');
+  const msg = "내가 하늘로 승천하노라! 🪽☁️";
+  showSpeechBubble(playerCharacter, msg);
+  addTestimonyToFeed(playerCharacter.name, "공중부양으로 허공을 날아오르며 승천했습니다!", "long");
+  sendMultiplayerAction('levitate', msg);
+}
+
 function sendBossHit(dmg = 8) {
   if (!bossGroup || !bossGroup.visible) return;
 
@@ -4210,6 +4669,14 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnHolyWater').addEventListener('click', triggerHolyWater);
   document.getElementById('btnToggleBelt').addEventListener('click', toggleBelt);
 
+  // 신규 액션 버튼 6개 바인딩
+  document.getElementById('btnKneel')?.addEventListener('click', triggerKneel);
+  document.getElementById('btnDance')?.addEventListener('click', triggerDance);
+  document.getElementById('btnMegaBull')?.addEventListener('click', triggerMegaBull);
+  document.getElementById('btnMoneyBless')?.addEventListener('click', triggerMoneyBless);
+  document.getElementById('btnShout')?.addEventListener('click', triggerShout);
+  document.getElementById('btnLevitate')?.addEventListener('click', triggerLevitate);
+
   // 사이드바 & 상단 버튼
   document.getElementById('btnOpenCustom').addEventListener('click', openCustomizationModal);
   document.getElementById('btnApplyCustom').addEventListener('click', applyCustomization);
@@ -4263,6 +4730,9 @@ window.addEventListener('DOMContentLoaded', () => {
   if (proxBtn) {
     proxBtn.addEventListener('click', triggerProximityAction);
   }
+
+  // 실시간 돌발 성령 부흥 이벤트 시스템 시작
+  initHolyRandomEvents();
 
   // 상단 양봉 강림 게이지 클릭 시 안내 및 기여
   const ritualHudEl = document.getElementById('ritualHud');
@@ -4353,3 +4823,103 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// ==========================================
+// 13. 실시간 돌발 성령 부흥 이벤트 시스템
+// ==========================================
+const HOLY_EVENTS = [
+  {
+    id: 'candle_night',
+    title: '🕯️ [돌발] 떡상 촛불 봉헌의 밤 (은혜 2배)',
+    desc: '지금 제단에 촛불을 봉헌하면 평단가 탈출 축복이 임합니다!',
+    targetPos: { x: -28, y: 0, z: -5 },
+    camPos: { x: -28, y: 6, z: 5 },
+    action: () => openCandleModal()
+  },
+  {
+    id: 'bull_surge',
+    title: '🐂 [돌발] 황소 성물 상한가 대부흥',
+    desc: '남관 황금 황소 성물에서 붉은 상한가 오라가 뿜어져 나옵니다!',
+    targetPos: { x: 0, y: 0, z: 31 },
+    camPos: { x: 0, y: 7, z: 42 },
+    action: () => interactWithBullStatue()
+  },
+  {
+    id: 'boss_invasion',
+    title: '👹 [돌발] 공매도 악귀 마왕 기습 출몰',
+    desc: '서관 통곡실에 하락 악귀가 준동합니다! 전 신도 성수 총력 퇴마!',
+    targetPos: { x: -25, y: 0, z: 6 },
+    camPos: { x: -18, y: 7, z: 16 },
+    action: () => triggerHolyWater()
+  },
+  {
+    id: 'revival_surge',
+    title: '🔥 [돌발] 성령존 전 신도 단체 통성기도회',
+    desc: '동관 성령존에서 강력한 불기둥이 폭발합니다! 전원 기도 합심!',
+    targetPos: { x: 30, y: 0, z: -3 },
+    camPos: { x: 30, y: 6, z: 6 },
+    action: () => interactWithRevivalCircle()
+  },
+  {
+    id: 'whale_blessing',
+    title: '🐋 [돌발] 100억 슈퍼고래 영생 강림',
+    desc: '북관 고래 참배원에 거대한 황금 코인비가 쏟아집니다!',
+    targetPos: { x: 0, y: 0, z: -22 },
+    camPos: { x: 0, y: 7, z: -14 },
+    action: () => interactWithWhaleStatue()
+  }
+];
+
+let currentHolyEvent = null;
+let holyEventTimeLeft = 0;
+let holyEventIntervalTimer = null;
+
+function initHolyRandomEvents() {
+  const banner = document.getElementById('holyEventBanner');
+  const titleEl = document.getElementById('holyEventTitle');
+  const timerEl = document.getElementById('holyEventTimer');
+  const joinBtn = document.getElementById('btnJoinHolyEvent');
+
+  if (!banner || !titleEl || !timerEl || !joinBtn) return;
+
+  function triggerNextRandomEvent() {
+    const ev = HOLY_EVENTS[Math.floor(Math.random() * HOLY_EVENTS.length)];
+    currentHolyEvent = ev;
+    holyEventTimeLeft = 75; // 75초간 지속
+
+    titleEl.textContent = ev.title;
+    banner.style.display = 'flex';
+    if (window.gajaAudio) window.gajaAudio.playAmenBellSfx();
+    addTestimonyToFeed('🚨 [돌발 부흥 집회 선포]', `${ev.title} - ${ev.desc}`, 'long');
+
+    clearInterval(holyEventIntervalTimer);
+    holyEventIntervalTimer = setInterval(() => {
+      holyEventTimeLeft--;
+      const min = Math.floor(holyEventTimeLeft / 60);
+      const sec = holyEventTimeLeft % 60;
+      timerEl.textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+
+      if (holyEventTimeLeft <= 0) {
+        clearInterval(holyEventIntervalTimer);
+        banner.style.display = 'none';
+        currentHolyEvent = null;
+        // 다음 돌발 이벤트는 90~150초 후 발동
+        setTimeout(triggerNextRandomEvent, (90 + Math.random() * 60) * 1000);
+      }
+    }, 1000);
+  }
+
+  joinBtn.addEventListener('click', () => {
+    if (!currentHolyEvent || !playerCharacter) return;
+    playerCharacter.group.position.set(currentHolyEvent.targetPos.x, currentHolyEvent.targetPos.y, currentHolyEvent.targetPos.z);
+    camera.position.set(currentHolyEvent.camPos.x, currentHolyEvent.camPos.y, currentHolyEvent.camPos.z);
+    if (controls) controls.target.set(currentHolyEvent.targetPos.x, 1.5, currentHolyEvent.targetPos.z);
+
+    showSpeechBubble(playerCharacter, `† ${currentHolyEvent.title} 집회에 참전했습니다! †`);
+    currentHolyEvent.action();
+    addExp(80);
+  });
+
+  // 게임 시작 30초 후 첫 돌발 이벤트 발동
+  setTimeout(triggerNextRandomEvent, 30000);
+}

@@ -392,6 +392,69 @@ canvas#gl-canvas {
   box-shadow: 0 0 10px #ff334b;
 }
 
+/* 실시간 돌발 성령 부흥 이벤트 배너 */
+.holy-event-banner {
+  position: absolute;
+  top: 108px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(35, 12, 22, 0.9);
+  border: 1.5px solid #ff334b;
+  box-shadow: 0 0 20px rgba(255, 51, 75, 0.4), 0 4px 15px rgba(0, 0, 0, 0.6);
+  z-index: 32;
+  animation: banner-glow 2s infinite alternate;
+}
+
+@keyframes banner-glow {
+  0% { box-shadow: 0 0 10px rgba(255, 51, 75, 0.3); }
+  100% { box-shadow: 0 0 25px rgba(255, 51, 75, 0.7); }
+}
+
+.event-glow-badge {
+  background: #ff334b;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 12px;
+  animation: blink 1s infinite;
+}
+
+.event-title-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.event-timer-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #38ef7d;
+  background: rgba(0,0,0,0.4);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.event-join-btn {
+  background: linear-gradient(135deg, #f59e0b, #ff334b);
+  border: none;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.event-join-btn:active {
+  transform: scale(0.92);
+}
+
 /* ---------------- 이벤트 / 미니게임 사이드 바 ---------------- */
 .event-sidebar {
   position: absolute;
@@ -432,21 +495,29 @@ canvas#gl-canvas {
 
 /* ---------------- 간증 피드 & 입력창 ---------------- */
 .middle-area {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  width: 100%;
-  height: 100%;
-  margin-bottom: 10px;
+  position: absolute;
+  bottom: 66px; /* 하단 툴바 바로 위까지 시원하게 내려옴 */
+  left: 18px;
+  width: 420px; /* 더 큼직하게 확장 */
+  height: auto;
+  margin: 0;
+  pointer-events: none;
+  z-index: 38;
 }
 
 .testimony-container {
-  width: 330px;
-  max-height: 230px;
+  width: 100%;
+  max-height: 330px; /* 시원하게 대화 8~10줄 이상 노출 */
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 12px 14px;
   overflow: hidden;
+  border-radius: 14px;
+  background: rgba(14, 9, 18, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(245, 197, 66, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
+  pointer-events: auto;
 }
 
 .testimony-header {
@@ -462,16 +533,23 @@ canvas#gl-canvas {
 }
 
 .testimony-list {
-  flex: 1;
+  min-height: 170px;
+  max-height: 220px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 197, 66, 0.4) transparent;
 }
 
 .testimony-list::-webkit-scrollbar {
-  display: none;
+  width: 4px;
+}
+
+.testimony-list::-webkit-scrollbar-thumb {
+  background: rgba(245, 197, 66, 0.4);
+  border-radius: 4px;
 }
 
 .testimony-item {
@@ -924,14 +1002,18 @@ canvas#gl-canvas {
     display: none !important;
   }
 
-  /* 성전 이동 선택기: 대성전 글자 바로 우측에 슬림하게 인라인 배치 */
+  /* 성전 이동 선택기: 모바일에서도 또렷하게 잘 보이도록 너비와 황금 테두리 대폭 강화 */
   .room-selector {
-    flex: 0 1 auto;
-    max-width: 115px;
-    padding: 2px 4px !important;
-    margin: 0 !important;
+    flex: 1 1 auto;
+    min-width: 125px;
+    max-width: 155px;
+    padding: 3px 6px !important;
+    margin: 0 2px !important;
     border-radius: 8px;
     box-sizing: border-box;
+    border: 1.5px solid #f5c542 !important;
+    background: rgba(22, 14, 28, 0.9) !important;
+    box-shadow: 0 0 10px rgba(245, 197, 66, 0.35) !important;
   }
 
   .room-label {
@@ -940,10 +1022,13 @@ canvas#gl-canvas {
 
   .room-select {
     width: 100% !important;
-    font-size: 10.5px !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    color: #f5c542 !important;
     padding: 3px 4px !important;
     border-radius: 6px;
-    background: rgba(0, 0, 0, 0.45);
+    background: transparent !important;
+    border: none !important;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
