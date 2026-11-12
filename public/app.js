@@ -3177,24 +3177,24 @@ const CLOUD_REGISTRY_GIST_ID = '8bd7ddc5c6df9538c8092e1f01c9b2fa';
 STATE.cloudHost = null;
 
 async function autoDiscoverHostServer() {
-  // 1. 로컬 패스트트랙 (같은 PC에서 브라우저로 접속한 경우 0.2초 만에 로컬 8080 직결!)
-  try {
-    const localCtrl = new AbortController();
-    const localTid = setTimeout(() => localCtrl.abort(), 350);
-    const localRes = await fetch('http://127.0.0.1:8080/api/stock-prices', { signal: localCtrl.signal, mode: 'cors' });
-    clearTimeout(localTid);
-    if (localRes.ok) {
-      console.log('[가즈아교] 로컬 PC 대성전 호스트(8080) 즉각 감지 성공!');
-      STATE.cloudHost = '127.0.0.1:8080';
-      return '127.0.0.1:8080';
-    }
-  } catch (eLocal) {
-    // 로컬 서버가 없는 외부 기기(스마트폰 등)는 클라우드 레지스트리로 계속 진행
+  // 1. 로컬 패스트트랙: HTTP 환경(로컬 브라우저)에서 0.2초 만에 로컬 8080 직통 연결!
+  if (window.location.protocol === 'http:') {
+    try {
+      const localCtrl = new AbortController();
+      const localTid = setTimeout(() => localCtrl.abort(), 250);
+      const localRes = await fetch('http://127.0.0.1:8080/api/stock-prices', { signal: localCtrl.signal });
+      clearTimeout(localTid);
+      if (localRes.ok) {
+        console.log('[가즈아교] 로컬 PC 대성전 호스트(8080) 즉각 감지 성공!');
+        STATE.cloudHost = '127.0.0.1:8080';
+        return '127.0.0.1:8080';
+      }
+    } catch (eLocal) {}
   }
 
   const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
-  // 2. Gist Raw URL (Rate Limit 제약 없음, 항상 최신 호스트 감지)
+  // 2. Gist Raw URL (Rate Limit 제약 없음, 최신 호스트 감지)
   try {
     const rawRes = await fetch(`https://gist.githubusercontent.com/kicharisma2/${CLOUD_REGISTRY_GIST_ID}/raw/host.json?_nocache=${cacheBuster}`, {
       cache: 'no-store'
@@ -4753,6 +4753,26 @@ function setupServerConfigModal() {
 window.addEventListener('DOMContentLoaded', () => {
   initWorld();
   setupServerConfigModal();
+
+  // 대성전 초대 링크 원클릭 복사
+  const shareBtn = document.getElementById('btnShareLink');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => {
+      let shareUrl = 'https://kicharisma2.github.io/gazua-cult/';
+      if (STATE.cloudHost && !STATE.cloudHost.includes('127.0.0.1') && !STATE.cloudHost.includes('localhost')) {
+        shareUrl = `https://kicharisma2.github.io/gazua-cult/?server=${STATE.cloudHost}`;
+      }
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        if (playerCharacter) {
+          showSpeechBubble(playerCharacter, '† 초대 링크가 복사되었습니다! 카톡이나 폰에 공유하세요 †');
+        }
+        addTestimonyToFeed('† 초대 링크 복사 †', `[${shareUrl}] 주소가 복사되었습니다. 다른 기기나 친구에게 보내주세요!`, 'long');
+        if (window.gajaAudio) window.gajaAudio.playAmenBellSfx();
+      }).catch(() => {
+        prompt('아래 대성전 초대 주소를 복사하세요:', shareUrl);
+      });
+    });
+  }
 
   document.getElementById('btnTongue').addEventListener('click', triggerTonguePrayer);
   document.getElementById('btnSlain').addEventListener('click', triggerSlainInSpirit);
