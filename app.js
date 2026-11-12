@@ -1121,31 +1121,102 @@ function buildMegachurch() {
   createSpaceSign(30, 4.2, -6, "🔥 [동관] 전 신도 합심 통성기도 성령존 (진입 시 양봉 게이지 2배 가속!)", 0xff334b, churchGroup);
 }
 
-// 3D 텍스트 간판 생성 헬퍼
+// 3D 공간 표지판 - 어디서 보든 정면을 향하는 고화질 네온 빌보드 홀로그램
+const signSpriteList = [];
+
 function createSpaceSign(x, y, z, textStr, colorHex, parent) {
   const c = document.createElement('canvas');
-  c.width = 512;
-  c.height = 128;
+  c.width = 1024;
+  c.height = 256;
   const ctx = c.getContext('2d');
-  ctx.fillStyle = 'rgba(15, 10, 13, 0.85)';
-  ctx.fillRect(0, 0, 512, 128);
-  ctx.strokeStyle = '#f5c542';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(4, 4, 504, 120);
 
-  ctx.fillStyle = '#' + new THREE.Color(colorHex).getHexString();
-  ctx.font = 'bold 26px "Noto Sans KR", sans-serif';
+  // 1. 반투명 다크 크림슨/옵시디언 배경
+  const bgGrad = ctx.createLinearGradient(0, 0, 1024, 256);
+  bgGrad.addColorStop(0, 'rgba(12, 6, 16, 0.92)');
+  bgGrad.addColorStop(0.5, 'rgba(28, 12, 24, 0.88)');
+  bgGrad.addColorStop(1, 'rgba(12, 6, 16, 0.92)');
+
+  // 둥근 사각형 배경 그리기
+  const rx = 16, ry = 16, rw = 1024 - 32, rh = 256 - 32, radius = 32;
+  ctx.beginPath();
+  ctx.moveTo(rx + radius, ry);
+  ctx.lineTo(rx + rw - radius, ry);
+  ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
+  ctx.lineTo(rx + rw, ry + rh - radius);
+  ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
+  ctx.lineTo(rx + radius, ry + rh);
+  ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
+  ctx.lineTo(rx, ry + radius);
+  ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
+  ctx.closePath();
+  ctx.fillStyle = bgGrad;
+  ctx.fill();
+
+  // 2. 화려한 네온 발광 테두리 (2중 스트로크)
+  const hexStr = '#' + new THREE.Color(colorHex).getHexString();
+  ctx.save();
+  ctx.strokeStyle = hexStr;
+  ctx.lineWidth = 8;
+  ctx.shadowColor = hexStr;
+  ctx.shadowBlur = 24;
+  ctx.stroke();
+  ctx.restore();
+
+  // 골드 내부 얇은 테두리
+  ctx.strokeStyle = '#f5c542';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // 3. 상단 미니 서브 헤더 (성전 구역 인증)
+  ctx.font = 'bold 24px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = '#f5c542';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(textStr, 256, 64);
+  ctx.fillText('† GAZUA SACRED SHRINE †', 512, 58);
 
+  // 4. 메인 텍스트 (굵고 선명한 외곽선 + 밝은 네온 컬러)
+  ctx.font = 'bold 44px "Noto Sans KR", sans-serif';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
+  ctx.strokeText(textStr, 512, 142);
+
+  ctx.fillStyle = hexStr;
+  ctx.shadowColor = hexStr;
+  ctx.shadowBlur = 12;
+  ctx.fillText(textStr, 512, 142);
+
+  // 5. 하단 얇은 황금 장식선
+  ctx.strokeStyle = 'rgba(245, 197, 66, 0.6)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(256, 210);
+  ctx.lineTo(768, 210);
+  ctx.stroke();
+
+  // Three.js 카메라 빌보드 Sprite 생성 (언제나 카메라 정면을 바라봄!)
   const tex = new THREE.CanvasTexture(c);
-  const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(6.0, 1.5),
-    new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide })
-  );
-  mesh.position.set(x, y, z);
-  parent.add(mesh);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+
+  const mat = new THREE.SpriteMaterial({
+    map: tex,
+    transparent: true,
+    depthTest: true,
+    depthWrite: false
+  });
+
+  const sprite = new THREE.Sprite(mat);
+  // 비율: 1024:256 = 4:1 -> 크기 7.2 x 1.8
+  sprite.scale.set(7.2, 1.8, 1.0);
+  sprite.position.set(x, y, z);
+  parent.add(sprite);
+
+  // 부유 애니메이션용 기준 Y좌표 기록
+  sprite.userData = { baseY: y, phase: Math.random() * Math.PI * 2 };
+  signSpriteList.push(sprite);
+
+  return sprite;
 }
 
 // 분수 파티클
@@ -2494,6 +2565,16 @@ function animate() {
     }
   }
 
+  // 3D 네온 홀로그램 표지판 은은한 부유 애니메이션
+  if (signSpriteList && signSpriteList.length > 0) {
+    for (let i = 0; i < signSpriteList.length; i++) {
+      const s = signSpriteList[i];
+      if (s && s.userData) {
+        s.position.y = s.userData.baseY + Math.sin(elapsed * 2.0 + s.userData.phase) * 0.14;
+      }
+    }
+  }
+
   // 1. 공매도 악귀 마왕 부유 및 체력바 카메라 주시
   if (bossGroup && bossGroup.visible) {
     bossGroup.position.y = 1.8 + Math.sin(elapsed * 2.2) * 0.25;
@@ -3327,55 +3408,18 @@ function updateHudUI() {
 }
 
 // ==========================================
-// 7. 진짜 실시간 단일 포트 WebSocket 멀티플레이어 & 오프라인 봇
+// 7. 진짜 실시간 단일 포트 WebSocket 멀티플레이어 & 실제 접속자 동기화
 // ==========================================
-let offlineBotsCreated = false;
 function startOfflineCultistBots() {
-  if (offlineBotsCreated) return;
-  offlineBotsCreated = true;
-
-  const botConfigs = [
-    { id: 'bot_grace', name: '[Lv.7 촛불사제] 존버은혜', x: -3.5, z: 2.5, robe: 'gold', hat: 'candle', wings: 'angel', belt: 'long' },
-    { id: 'bot_pastor', name: '[Lv.10 대양봉사제] 떡상목사', x: 3.5, z: 1.8, robe: 'crimson', hat: 'crown', wings: 'mecha', belt: 'long' },
-    { id: 'bot_ant', name: '[Lv.3 차트관찰자] 희망개미', x: 0, z: -4.0, robe: 'sky', hat: 'halo', wings: 'none', belt: 'long' }
-  ];
-
-  botConfigs.forEach(b => {
-    const peer = createCuteCultist({
-      isPlayer: false,
-      id: b.id,
-      name: b.name,
-      level: 5,
-      title: '사제',
-      robeColor: b.robe,
-      hatType: b.hat,
-      wingsType: b.wings,
-      beltType: b.belt,
-      pos: { x: b.x, y: 0, z: b.z }
-    });
-    remotePeers[b.id] = peer;
-    addNameTag(peer, false);
-  });
-
-  setActualOnlineCount(4);
-
-  const botQuotes = [
-    "상한가의 은혜가 임할지어다! 아멘!",
-    "오늘 밤 FOMC 떡상 가즈아!",
-    "믿는 자에게 붉은 양봉이 내리나이다!",
-    "단두대에 음봉을 올리고 구원을 얻으라!",
-    "황소 성물의 축복을 받으소서!"
-  ];
-
-  setInterval(() => {
-    if (STATE.isOnlineMultiplayer) return;
-    const randomBot = botConfigs[Math.floor(Math.random() * botConfigs.length)];
-    const peer = remotePeers[randomBot.id];
-    if (peer) {
-      const q = botQuotes[Math.floor(Math.random() * botQuotes.length)];
-      showSpeechBubble(peer, q);
+  // 사용자의 요청에 따라 가짜 봇 3명을 완전히 제거하고, 실제 사람만 100% 정직하게 표시합니다.
+  ['bot_grace', 'bot_pastor', 'bot_ant'].forEach(id => {
+    if (remotePeers[id]) {
+      scene.remove(remotePeers[id]);
+      delete remotePeers[id];
     }
-  }, 10000);
+  });
+  // 혼자 접속해 있을 때는 정직하게 1명으로 표시
+  setActualOnlineCount(1);
 }
 
 let isConnectingIntegrated = false;
