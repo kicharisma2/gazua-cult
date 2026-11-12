@@ -2776,29 +2776,18 @@ function updateParticles(dt) {
 // ==========================================
 // 6. 실시간 시세 및 100% 전자동 호스트 클라우드 레지스트리 연동
 // ==========================================
-const CLOUD_REGISTRY_GIST_URL = 'https://api.github.com/gists/8bd7ddc5c6df9538c8092e1f01c9b2fa';
+const CLOUD_REGISTRY_GIST_ID = '8bd7ddc5c6df9538c8092e1f01c9b2fa';
 STATE.cloudHost = null;
 
 async function autoDiscoverHostServer() {
-  // 1차 시도: API Rate Limit 없는 Gist Raw URL (모바일 및 전 세계 100% 실시간 무제한)
-  try {
-    const rawRes = await fetch('https://gist.githubusercontent.com/kicharisma2/8bd7ddc5c6df9538c8092e1f01c9b2fa/raw/host.json?_t=' + Date.now());
-    if (rawRes.ok) {
-      const parsed = await rawRes.json();
-      if (parsed && parsed.status === 'online' && parsed.host) {
-        const cleanHost = parsed.host.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
-        STATE.cloudHost = cleanHost;
-        console.log('[대양봉교] Gist Raw 호스트 자동 발견 성공:', cleanHost);
-        return cleanHost;
-      }
-    }
-  } catch (e1) {
-    console.warn('[대양봉교] Gist Raw 조회 알림:', e1);
-  }
+  const cacheBuster = Date.now();
 
-  // 2차 시도: GitHub Gist REST API
+  // 1차 시도: GitHub Gist REST API (실시간 즉각 반영 보장)
   try {
-    const res = await fetch('https://api.github.com/gists/8bd7ddc5c6df9538c8092e1f01c9b2fa?_t=' + Date.now());
+    const res = await fetch(`https://api.github.com/gists/${CLOUD_REGISTRY_GIST_ID}?_t=${cacheBuster}`, {
+      headers: { 'Accept': 'application/vnd.github.v3+json' },
+      cache: 'no-store'
+    });
     if (res.ok) {
       const data = await res.json();
       if (data.files && data.files['host.json']) {
@@ -2806,34 +2795,58 @@ async function autoDiscoverHostServer() {
         if (parsed && parsed.status === 'online' && parsed.host) {
           const cleanHost = parsed.host.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
           STATE.cloudHost = cleanHost;
-          console.log('[대양봉교] Gist API 호스트 자동 발견 성공:', cleanHost);
+          console.log('[가즈아교] Gist API 호스트 자동 발견 성공:', cleanHost);
           return cleanHost;
+        } else if (parsed && parsed.status === 'offline') {
+          console.log('[가즈아교] 호스트 서버가 현재 오프라인 상태입니다.');
+          STATE.cloudHost = null;
+          return null;
         }
       }
     }
   } catch (err) {
-    console.warn('[대양봉교] Gist API 조회 알림:', err);
+    console.warn('[가즈아교] Gist API 조회 알림 (Raw로 폴백):', err);
   }
+
+  // 2차 시도: Gist Raw URL (Rate Limit 없는 폴백)
+  try {
+    const rawRes = await fetch(`https://gist.githubusercontent.com/kicharisma2/${CLOUD_REGISTRY_GIST_ID}/raw/host.json?_t=${cacheBuster}`, {
+      cache: 'no-store'
+    });
+    if (rawRes.ok) {
+      const parsed = await rawRes.json();
+      if (parsed && parsed.status === 'online' && parsed.host) {
+        const cleanHost = parsed.host.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
+        STATE.cloudHost = cleanHost;
+        console.log('[가즈아교] Gist Raw 호스트 자동 발견 성공:', cleanHost);
+        return cleanHost;
+      } else if (parsed && parsed.status === 'offline') {
+        STATE.cloudHost = null;
+        return null;
+      }
+    }
+  } catch (e1) {
+    console.warn('[가즈아교] Gist Raw 조회 알림:', e1);
+  }
+
+  STATE.cloudHost = null;
   return null;
 }
 
 function getServerHost() {
+  // 1. URL 파라미터 (?server=...) 명시적 지정 시 최우선 직결
   const urlParams = new URLSearchParams(window.location.search);
   const qServer = urlParams.get('server');
   if (qServer && !qServer.includes('github.io')) {
-    const clean = qServer.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
-    return clean;
+    return qServer.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
   }
-  const saved = localStorage.getItem('GAZUA_SERVER_HOST');
-  if (saved && saved.includes('github.io')) {
-    localStorage.removeItem('GAZUA_SERVER_HOST');
-  } else if (saved && saved.trim()) {
-    return saved.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
-  }
-  // GitHub Pages 환경이 아닌 로컬 또는 직접 터널 접속인 경우
+
+  // 2. GitHub Pages가 아닌 로컬호스트나 직접 터널에서 실행된 경우
   if (!window.location.host.includes('github.io')) {
     return window.location.host;
   }
+
+  // 3. GitHub Pages 환경에서는 죽은 옛날 캐시를 방지하기 위해 실시간 자동 감지 결과(STATE.cloudHost)만 사용
   return STATE.cloudHost || null;
 }
 
@@ -3127,21 +3140,23 @@ async function connectIntegratedMultiplayer(overrideHost) {
     };
 
     STATE.multiWs.onerror = (err) => {
-      console.warn('[가즈아교] 멀티플레이어 연결 오류');
+      console.warn('[가즈아교] 멀티플레이어 연결 오류 - 최신 호스트 재탐색 준비');
       STATE.isOnlineMultiplayer = false;
+      STATE.cloudHost = null; // 죽은 호스트 캐시 리셋
       updateServerConnectionStatusBadge(false, host, '오류');
       startOfflineCultistBots();
     };
 
     STATE.multiWs.onclose = () => {
       STATE.isOnlineMultiplayer = false;
-      updateServerConnectionStatusBadge(false, host, '재연결 중');
+      STATE.cloudHost = null; // 죽은 호스트 캐시 리셋
+      updateServerConnectionStatusBadge(false, host, '재탐색 중');
       startOfflineCultistBots();
       clearTimeout(window._autoDiscoverTimer);
       window._autoDiscoverTimer = setTimeout(() => {
         isConnectingIntegrated = false;
         connectIntegratedMultiplayer();
-      }, 5000);
+      }, 3500);
     };
 
   } catch (err) {

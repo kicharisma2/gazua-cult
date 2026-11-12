@@ -188,15 +188,15 @@ def main():
         print(f"     👉  {GITHUB_SITE_URL}", flush=True)
         print("=" * 70, flush=True)
         print(" 📢 [이용 안내 - 100% 완전 자동 연동!]", flush=True)
-        print(" - 이제 어떤 주소도 복사하거나 입력하실 필요가 없습니다!", flush=True)
-        print(f" - 본인도, 스마트폰에서도, 친구들에게도 위의 '고정 웹사이트 링크'만 주시면", flush=True)
-        print("   웹페이지가 자동으로 지금 켜진 이 서버를 감지하여 1초 만에 연결됩니다!", flush=True)
-        print(" - 이 검은 창을 켜두시는 동안 전 세계 실시간 멀티플레이가 유지됩니다.", flush=True)
-        print(" - 종료하시려면 키보드의 Ctrl + C 또는 이 창을 닫아주세요.", flush=True)
+        print(" 1. 스마트폰이나 친구들은 그냥 위의 '고정 웹사이트 링크'로 접속하면", flush=True)
+        print("    현재 켜진 이 서버를 자동으로 감지하여 1초 만에 같은 방으로 직결됩니다!", flush=True)
+        print(" 2. 이 검은 창을 켜두시는 동안 전 세계 실시간 멀티플레이/채팅이 유지됩니다.", flush=True)
+        print(" 3. 종료하시려면 키보드의 Ctrl + C 또는 이 창을 닫아주세요.", flush=True)
         print("=" * 70 + "\n", flush=True)
 
-        print(" [3/3] 브라우저에서 대성전 웹사이트를 자동으로 실행합니다...", flush=True)
-        webbrowser.open(GITHUB_SITE_URL)
+        direct_site_url = f"{GITHUB_SITE_URL}?server={public_url}"
+        print(f" [3/3] 호스트 PC 대성전 사이트를 즉시 직통 실행합니다...", flush=True)
+        webbrowser.open(direct_site_url)
     else:
         print("[!] 공인 URL 발급에 지연이 발생했습니다. 깃허브 웹사이트를 엽니다.", flush=True)
         webbrowser.open(GITHUB_SITE_URL)
