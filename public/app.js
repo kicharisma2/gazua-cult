@@ -1050,14 +1050,14 @@ function buildMegachurch() {
   coinPondGroupLocal.add(pondRim);
 
   // 푸른 청록색 성스러운 수면
-  const waterMat = new THREE.MeshStandardMaterial({
+  const pondWaterMat = new THREE.MeshStandardMaterial({
     color: 0x06b6d4,
     roughness: 0.1,
     metalness: 0.8,
     transparent: true,
     opacity: 0.75
   });
-  const pondWater = new THREE.Mesh(new THREE.CylinderGeometry(6.3, 6.3, 0.15, 32), waterMat);
+  const pondWater = new THREE.Mesh(new THREE.CylinderGeometry(6.3, 6.3, 0.15, 32), pondWaterMat);
   pondWater.position.y = 0.15;
   coinPondGroupLocal.add(pondWater);
 
