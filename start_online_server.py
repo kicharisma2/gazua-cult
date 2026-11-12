@@ -80,24 +80,34 @@ def get_base_dir():
     return os.path.dirname(os.path.abspath(__file__))
 
 def find_cloudflared():
+    # 1. PyInstaller _MEIPASS 내장 디렉토리 (단독 exe 패키징 시 최우선 탐색)
+    if getattr(sys, 'frozen', False):
+        p_mei = os.path.join(getattr(sys, '_MEIPASS', ''), "cloudflared.exe")
+        if os.path.exists(p_mei):
+            return p_mei
+
     base_dir = get_base_dir()
-    # 1. 실행파일 디렉토리
+    # 2. 실행파일 디렉토리
     p1 = os.path.join(base_dir, "cloudflared.exe")
     if os.path.exists(p1):
         return p1
-    # 2. 부모 디렉토리 (dist/ 에서 실행된 경우 대비)
+
+    # 3. 부모 디렉토리 (dist/ 내부에서 실행된 경우)
     p_parent = os.path.join(os.path.dirname(base_dir), "cloudflared.exe")
     if os.path.exists(p_parent):
         return p_parent
-    # 3. _MEIPASS 내장 디렉토리
-    if getattr(sys, 'frozen', False):
-        p2 = os.path.join(getattr(sys, '_MEIPASS', ''), "cloudflared.exe")
-        if os.path.exists(p2):
-            return p2
+
     # 4. 현재 작업 경로
     p3 = os.path.join(os.getcwd(), "cloudflared.exe")
     if os.path.exists(p3):
         return p3
+
+    # 5. 시스템 환경변수 PATH
+    import shutil
+    p_which = shutil.which("cloudflared")
+    if p_which:
+        return p_which
+
     return None
 
 def main():
