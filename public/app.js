@@ -3177,37 +3177,11 @@ const CLOUD_REGISTRY_GIST_ID = '8bd7ddc5c6df9538c8092e1f01c9b2fa';
 STATE.cloudHost = null;
 
 async function autoDiscoverHostServer() {
-  const cacheBuster = Date.now();
+  const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
-  // 1차 시도: GitHub Gist REST API (실시간 즉각 반영 보장)
+  // 1차 시도: Gist Raw URL (Rate Limit 제약 없음, 항상 200 OK)
   try {
-    const res = await fetch(`https://api.github.com/gists/${CLOUD_REGISTRY_GIST_ID}?_t=${cacheBuster}`, {
-      headers: { 'Accept': 'application/vnd.github.v3+json' },
-      cache: 'no-store'
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.files && data.files['host.json']) {
-        const parsed = JSON.parse(data.files['host.json'].content);
-        if (parsed && parsed.status === 'online' && parsed.host) {
-          const cleanHost = parsed.host.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
-          STATE.cloudHost = cleanHost;
-          console.log('[가즈아교] Gist API 호스트 자동 발견 성공:', cleanHost);
-          return cleanHost;
-        } else if (parsed && parsed.status === 'offline') {
-          console.log('[가즈아교] 호스트 서버가 현재 오프라인 상태입니다.');
-          STATE.cloudHost = null;
-          return null;
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('[가즈아교] Gist API 조회 알림 (Raw로 폴백):', err);
-  }
-
-  // 2차 시도: Gist Raw URL (Rate Limit 없는 폴백)
-  try {
-    const rawRes = await fetch(`https://gist.githubusercontent.com/kicharisma2/${CLOUD_REGISTRY_GIST_ID}/raw/host.json?_t=${cacheBuster}`, {
+    const rawRes = await fetch(`https://gist.githubusercontent.com/kicharisma2/${CLOUD_REGISTRY_GIST_ID}/raw/host.json?_nocache=${cacheBuster}`, {
       cache: 'no-store'
     });
     if (rawRes.ok) {
@@ -3224,6 +3198,31 @@ async function autoDiscoverHostServer() {
     }
   } catch (e1) {
     console.warn('[가즈아교] Gist Raw 조회 알림:', e1);
+  }
+
+  // 2차 시도: GitHub Gist REST API (폴백)
+  try {
+    const res = await fetch(`https://api.github.com/gists/${CLOUD_REGISTRY_GIST_ID}?_nocache=${cacheBuster}`, {
+      headers: { 'Accept': 'application/vnd.github.v3+json' },
+      cache: 'no-store'
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.files && data.files['host.json']) {
+        const parsed = JSON.parse(data.files['host.json'].content);
+        if (parsed && parsed.status === 'online' && parsed.host) {
+          const cleanHost = parsed.host.trim().replace(/^https?:\/\//i, '').replace(/^wss?:\/\//i, '').replace(/\/+index\.html$/i, '').replace(/\/+$/, '');
+          STATE.cloudHost = cleanHost;
+          console.log('[가즈아교] Gist API 호스트 자동 발견 성공:', cleanHost);
+          return cleanHost;
+        } else if (parsed && parsed.status === 'offline') {
+          STATE.cloudHost = null;
+          return null;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[가즈아교] Gist API 조회 알림:', err);
   }
 
   STATE.cloudHost = null;
@@ -3256,7 +3255,7 @@ function updateServerConnectionStatusBadge(connected, host, stateDetail = '') {
 
   if (connected) {
     if (iconEl) iconEl.textContent = '🟢';
-    if (textEl) textEl.textContent = '실시간 연결';
+    if (textEl) textEl.textContent = stateDetail ? `실시간 (${stateDetail})` : '실시간 연결';
     if (btnEl) {
       btnEl.style.borderColor = '#38ef7d';
       btnEl.style.color = '#38ef7d';
@@ -3266,7 +3265,7 @@ function updateServerConnectionStatusBadge(connected, host, stateDetail = '') {
       modalBadge.style.color = '#38ef7d';
     }
     if (modalHostText) {
-      modalHostText.textContent = `연결 호스트: ${host} (자동 감지 완료)`;
+      modalHostText.textContent = `연결 호스트: ${host || '로컬 호스트'} (자동 감지 완료)`;
     }
   } else {
     if (iconEl) iconEl.textContent = '🟡';
@@ -3462,7 +3461,15 @@ async function connectIntegratedMultiplayer(overrideHost) {
     STATE.multiWs.onopen = () => {
       console.log('[가즈아교] 실시간 멀티플레이어 서버 자동 접속 성공:', wsUrl);
       STATE.isOnlineMultiplayer = true;
-      updateServerConnectionStatusBadge(true, host);
+      updateServerConnectionStatusBadge(true, host, '동기화 중...');
+
+      // 주기적 하트비트 Ping (모바일 브라우저 절전 차단 & Cloudflare 타임아웃 방지)
+      clearInterval(window._wsPingTimer);
+      window._wsPingTimer = setInterval(() => {
+        if (STATE.multiWs && STATE.multiWs.readyState === WebSocket.OPEN) {
+          STATE.multiWs.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 12000);
 
       // 오프라인 봇 제거
       if (offlineBotsCreated) {
@@ -3501,6 +3508,7 @@ async function connectIntegratedMultiplayer(overrideHost) {
 
     STATE.multiWs.onerror = (err) => {
       console.warn('[가즈아교] 멀티플레이어 연결 오류 - 최신 호스트 재탐색 준비');
+      clearInterval(window._wsPingTimer);
       STATE.isOnlineMultiplayer = false;
       STATE.cloudHost = null; // 죽은 호스트 캐시 리셋
       updateServerConnectionStatusBadge(false, host, '오류');
@@ -3508,6 +3516,8 @@ async function connectIntegratedMultiplayer(overrideHost) {
     };
 
     STATE.multiWs.onclose = () => {
+      console.warn('[가즈아교] 멀티플레이어 소켓 닫힘 - 재연결 시도');
+      clearInterval(window._wsPingTimer);
       STATE.isOnlineMultiplayer = false;
       STATE.cloudHost = null; // 죽은 호스트 캐시 리셋
       updateServerConnectionStatusBadge(false, host, '재탐색 중');
@@ -3534,6 +3544,7 @@ function handleMultiplayerMessage(msg) {
       // 실제 서버 접속자 수 및 내 클라이언트 ID 동기화
       if (typeof msg.count === 'number') {
         setActualOnlineCount(msg.count);
+        updateServerConnectionStatusBadge(true, getServerHost(), `${msg.count}명 접속`);
       }
       if (msg.id) {
         STATE.myClientId = msg.id;
@@ -3565,7 +3576,10 @@ function handleMultiplayerMessage(msg) {
       // 기존 피어들 생성
       if (Array.isArray(msg.peers)) {
         msg.peers.forEach(peerInfo => {
-          if (peerInfo) addRemotePeer(peerInfo);
+          if (peerInfo) {
+            addRemotePeer(peerInfo);
+            addTestimonyToFeed('† 성전 안내 †', `[${peerInfo.name}] 신도님이 함께 기도 중입니다.`, 'long');
+          }
         });
       }
       break;
@@ -3573,10 +3587,11 @@ function handleMultiplayerMessage(msg) {
     case 'peer_join':
       if (typeof msg.count === 'number') {
         setActualOnlineCount(msg.count);
+        updateServerConnectionStatusBadge(true, getServerHost(), `${msg.count}명 접속`);
       }
       if (msg.peer) {
         addRemotePeer(msg.peer);
-        addTestimonyToFeed('† 성전 안내 †', `[${msg.peer.name}] 신도님이 대성전에 입장하셨습니다!`, 'long');
+        addTestimonyToFeed('† 성전 안내 †', `🎉 [${msg.peer.name}] 신도님이 대성전에 입장하셨습니다!`, 'long');
         window.gajaAudio.playAmenBellSfx();
       }
       break;

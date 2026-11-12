@@ -1,6 +1,6 @@
 # ========================================================
 # 가즈아교 (GAZUA CULT) 온라인 대성전 통합 서버 (단일 포트 8080)
-# HTTP 정적 파일 서빙 + RFC 6455 WebSocket 멀티플레이 통합
+# HTTP 정적 파일 서빙 + RFC 6455 WebSocket 멀티플레이 통합 (완벽 스레드 안전 & Ping/Pong 완비)
 # ========================================================
 
 import os
@@ -58,7 +58,6 @@ REAL_STOCK_DATA = {
 
 def fetch_real_stocks_loop():
     while True:
-        # 1. 국내 주식 (삼성전자 005930, SK하이닉스 000660) 네이버 금융 공식 실시간 API
         try:
             url = 'https://polling.finance.naver.com/api/realtime/domestic/stock/005930,000660'
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -86,7 +85,6 @@ def fetch_real_stocks_loop():
         except Exception:
             pass
 
-        # 2. 미국 주식 (TSLA, NVDA) 야후 파이낸스 실시간 시세
         for sym, rkey in [('TSLA', 'US-TSLA'), ('NVDA', 'US-NVDA')]:
             try:
                 y_url = f'https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d'
@@ -107,8 +105,8 @@ def fetch_real_stocks_loop():
         time.sleep(3.0)
 
 CLIENT_MAP = {}    # { sock: client_id }
-CLIENT_META = {}   # { client_id: {'room': r, 'info': info, 'sock': sock} }
-CLIENT_LOCK = threading.RLock() # 재진입 가능한 RLock으로 데드락 원천 차단
+CLIENT_META = {}   # { client_id: {'room': r, 'info': info, 'sock': sock, 'send_lock': Lock()} }
+CLIENT_LOCK = threading.RLock() # 메인 동기화 RLock
 
 WS_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
@@ -122,10 +120,10 @@ def make_ws_handshake(key):
     )
     return handshake.encode('utf-8')
 
-def encode_ws_frame(data_str):
-    payload = data_str.encode('utf-8')
+def encode_ws_frame(data_str, opcode=0x1):
+    payload = data_str.encode('utf-8') if isinstance(data_str, str) else data_str
     length = len(payload)
-    frame = bytearray([0x81])
+    frame = bytearray([0x80 | (opcode & 0x0f)])
     if length <= 125:
         frame.append(length)
     elif length <= 65535:
@@ -137,56 +135,79 @@ def encode_ws_frame(data_str):
     frame.extend(payload)
     return bytes(frame)
 
-def recv_exact(sock, num_bytes):
-    data = bytearray()
-    while len(data) < num_bytes:
-        try:
-            chunk = sock.recv(num_bytes - len(data))
-            if not chunk:
-                return None
-            data.extend(chunk)
-        except Exception:
-            return None
-    return bytes(data)
-
-def decode_ws_frame(sock):
+def safe_send_frame(sock, frame_bytes, send_lock=None):
+    """스레드 안전한 WebSocket 프레임 전송 (프레임 데이터 오염 방지)"""
     try:
-        header = recv_exact(sock, 2)
-        if not header:
+        if send_lock:
+            with send_lock:
+                sock.sendall(frame_bytes)
+        else:
+            sock.sendall(frame_bytes)
+        return True
+    except Exception:
+        return False
+
+def recv_exact_stream(rfile, num_bytes):
+    """rfile 버퍼에서 정확히 num_bytes 만큼 읽기"""
+    try:
+        data = rfile.read(num_bytes)
+        if len(data) < num_bytes:
             return None
+        return data
+    except Exception:
+        return None
+
+def decode_ws_frame_from_stream(rfile, sock, send_lock):
+    """RFC 6455 웹소켓 프레임 디코딩 및 Ping/Pong 완벽 자동 처리"""
+    try:
+        header = recv_exact_stream(rfile, 2)
+        if not header:
+            return None, None
         b1, b2 = header[0], header[1]
         opcode = b1 & 0x0f
-        if opcode == 0x8: # Connection close
-            return None
+
+        # 0x8: Connection Close
+        if opcode == 0x8:
+            return 'close', None
+
         masked = (b2 & 0x80) != 0
         payload_len = b2 & 0x7f
 
         if payload_len == 126:
-            ext = recv_exact(sock, 2)
-            if not ext: return None
+            ext = recv_exact_stream(rfile, 2)
+            if not ext: return None, None
             payload_len = struct.unpack("!H", ext)[0]
         elif payload_len == 127:
-            ext = recv_exact(sock, 8)
-            if not ext: return None
+            ext = recv_exact_stream(rfile, 8)
+            if not ext: return None, None
             payload_len = struct.unpack("!Q", ext)[0]
 
-        mask = recv_exact(sock, 4) if masked else None
+        mask = recv_exact_stream(rfile, 4) if masked else None
         if masked and not mask:
-            return None
+            return None, None
 
-        data = recv_exact(sock, payload_len)
+        data = recv_exact_stream(rfile, payload_len)
         if data is None:
-            return None
+            return None, None
 
         if masked and mask:
             data = bytearray(data)
             for i in range(len(data)):
                 data[i] ^= mask[i % 4]
 
-        return data.decode('utf-8', errors='ignore')
+        # 0x9: Ping -> 즉각 Pong(0xA) 응답 전송! (연결 영구 유지의 핵심)
+        if opcode == 0x9:
+            pong_frame = encode_ws_frame(data, opcode=0xA)
+            safe_send_frame(sock, pong_frame, send_lock)
+            return 'ping', None
+
+        # 0xA: Pong -> 하트비트 수신 완료
+        if opcode == 0xA:
+            return 'pong', None
+
+        return 'text', data.decode('utf-8', errors='ignore')
     except Exception as e:
-        print(f"[WS_DECODE_ERR] {e}", flush=True)
-        return None
+        return None, None
 
 def broadcast_room(room_id, msg_obj, exclude_sock=None):
     if room_id not in ROOMS:
@@ -198,14 +219,12 @@ def broadcast_room(room_id, msg_obj, exclude_sock=None):
             sock = info['ws']
             if sock == exclude_sock:
                 continue
-            try:
-                sock.sendall(frame)
-            except Exception:
+            slock = info.get('send_lock')
+            if not safe_send_frame(sock, frame, slock):
                 dead_socks.append(sock)
 
-    # 락 밖에서 안전하게 종료된 소켓 정리 (데드락 원천 방지)
     for sock in dead_socks:
-        cleanup_client(sock, reason='broadcast_sendall_failed')
+        cleanup_client(sock, reason='broadcast_failed')
 
 def cleanup_client(sock, reason='normal_close'):
     old_room = None
@@ -238,22 +257,36 @@ def cleanup_client(sock, reason='normal_close'):
             'count': actual_count
         })
 
-def handle_websocket_loop(sock):
+def handle_websocket_loop(handler):
+    sock = handler.connection
+    rfile = handler.rfile
+    send_lock = threading.Lock()
+
     try:
         sock.settimeout(None)
     except Exception:
         pass
+
     client_id = os.urandom(6).hex()
     current_room = 'KRW-BTC'
 
     while True:
-        msg_str = decode_ws_frame(sock)
-        if msg_str is None:
+        status, msg_str = decode_ws_frame_from_stream(rfile, sock, send_lock)
+        if status in (None, 'close'):
             break
+        if status in ('ping', 'pong'):
+            continue
+        if not msg_str:
+            continue
 
         try:
             msg = json.loads(msg_str)
             mtype = msg.get('type')
+
+            if mtype == 'ping':
+                # 클라이언트 애플리케이션 레벨 Ping
+                safe_send_frame(sock, encode_ws_frame(json.dumps({'type': 'pong'})), send_lock)
+                continue
 
             if mtype == 'join':
                 new_room = msg.get('room', 'KRW-BTC')
@@ -262,15 +295,13 @@ def handle_websocket_loop(sock):
 
                 old_room = None
                 with CLIENT_LOCK:
-                    # 기존 방에 있었는지 확인
                     if client_id in CLIENT_META:
                         old_room = CLIENT_META[client_id].get('room')
                         if old_room and old_room in ROOMS and client_id in ROOMS[old_room]:
                             ROOMS[old_room].pop(client_id, None)
 
-                # 이전 방 신도들에게 퇴장 브로드캐스트 & 인원수 갱신
                 if old_room and old_room in ROOMS and old_room != new_room:
-                    print(f"[-] 신도 방 이동 퇴장: {client_id} ({old_room} -> {new_room})", flush=True)
+                    print(f"[-] 신도 방 이동: {client_id} ({old_room} -> {new_room})", flush=True)
                     broadcast_room(old_room, {
                         'type': 'peer_leave',
                         'id': client_id,
@@ -295,18 +326,20 @@ def handle_websocket_loop(sock):
                         'jump': bool(msg.get('jump', False)),
                         'act': 'idle'
                     }
-                    ROOMS[current_room][client_id] = {'ws': sock, 'info': client_info}
+                    ROOMS[current_room][client_id] = {'ws': sock, 'info': client_info, 'send_lock': send_lock}
                     CLIENT_MAP[sock] = client_id
-                    CLIENT_META[client_id] = {'room': current_room, 'info': client_info, 'sock': sock}
+                    CLIENT_META[client_id] = {'room': current_room, 'info': client_info, 'sock': sock, 'send_lock': send_lock}
 
                     actual_count = len(ROOMS[current_room])
                     peer_list = [p['info'] for p in ROOMS[current_room].values() if p['info']['id'] != client_id]
 
-                print(f"[+] 신도 입장: [{client_info['title']}] {client_info['name']} ({client_id}) -> {current_room} (실제 인원: {actual_count}명)", flush=True)
+                print(f"[+] 신도 입장: [{client_info['title']}] {client_info['name']} ({client_id}) -> {current_room} (실제 성전 인원: {actual_count}명)", flush=True)
 
                 r_st = ROOM_STATE.get(current_room, {'ritual_gauge': 35, 'boss_hp': 100})
                 recent_chats = ROOM_CHAT_HISTORY.get(current_room, [])[-40:]
-                sock.sendall(encode_ws_frame(json.dumps({
+
+                # 1. 환영 패킷 전송 (기존 접속자 목록 포함)
+                safe_send_frame(sock, encode_ws_frame(json.dumps({
                     'type': 'welcome',
                     'id': client_id,
                     'room': current_room,
@@ -315,8 +348,9 @@ def handle_websocket_loop(sock):
                     'ritual_gauge': r_st.get('ritual_gauge', 35),
                     'boss_hp': r_st.get('boss_hp', 100),
                     'chat_history': recent_chats
-                })))
+                })), send_lock)
 
+                # 2. 방 내 기존 신도들에게 새로운 신도 입장 즉시 브로드캐스트!
                 broadcast_room(current_room, {
                     'type': 'peer_join',
                     'peer': client_info,
@@ -383,7 +417,6 @@ def handle_websocket_loop(sock):
                 wings_val = msg.get('wings', 'angel')
                 belt_val = msg.get('belt', 'long')
                 name_val = msg.get('name', '신도')
-                print(f"[LOOK_UPDATE] Room={current_room}, From={client_id}: {name_val}, robe={robe_val}, hat={hat_val}, wings={wings_val}, belt={belt_val}", flush=True)
 
                 with CLIENT_LOCK:
                     if client_id in CLIENT_META:
@@ -413,13 +446,14 @@ def handle_websocket_loop(sock):
                     'belt': msg.get('belt', 'long'),
                     'time': time.strftime("%H:%M")
                 }
-                print(f"[CHAT_BROADCAST] Room={current_room}, From={client_id}({chat_entry['name']}): {chat_entry['text']}", flush=True)
+                print(f"[간증 대화] [{current_room}] {chat_entry['name']}: {chat_entry['text']}", flush=True)
                 if current_room not in ROOM_CHAT_HISTORY:
                     ROOM_CHAT_HISTORY[current_room] = []
                 ROOM_CHAT_HISTORY[current_room].append(chat_entry)
                 if len(ROOM_CHAT_HISTORY[current_room]) > 100:
                     ROOM_CHAT_HISTORY[current_room].pop(0)
 
+                # 모든 신도에게 브로드캐스트
                 broadcast_room(current_room, chat_entry, exclude_sock=sock)
 
             elif mtype == 'roulette':
@@ -487,8 +521,6 @@ def handle_websocket_loop(sock):
 
         except Exception as e:
             print(f"[WS_MSG_EXCEPTION] {client_id}: {e}", flush=True)
-            import traceback
-            traceback.print_exc()
             break
 
     cleanup_client(sock, reason='loop_exit')
@@ -505,9 +537,10 @@ class CultistHTTPHandler(SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(REAL_STOCK_DATA).encode('utf-8'))
             return
 
-        # 2. WebSocket 업그레이드 감지
+        # 2. WebSocket 업그레이드 감지 (대소문자/복합 헤더 완벽 지원)
         upgrade = self.headers.get('Upgrade', '').lower()
-        if upgrade == 'websocket':
+        connection = self.headers.get('Connection', '').lower()
+        if 'websocket' in upgrade or 'upgrade' in connection:
             ws_key = self.headers.get('Sec-WebSocket-Key')
             if ws_key:
                 sock = self.connection
@@ -516,7 +549,7 @@ class CultistHTTPHandler(SimpleHTTPRequestHandler):
                 except Exception:
                     pass
                 sock.sendall(make_ws_handshake(ws_key))
-                handle_websocket_loop(sock)
+                handle_websocket_loop(self)
                 return
 
         # 3. 일반 정적 HTTP 파일 서빙
@@ -524,10 +557,10 @@ class CultistHTTPHandler(SimpleHTTPRequestHandler):
 
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        self.send_header('Access-Control-Allow-Origin', '*')
         super().end_headers()
 
     def log_message(self, format, *args):
-        # 콘솔 로그 간소화
         pass
 
 def get_resource_dir():
