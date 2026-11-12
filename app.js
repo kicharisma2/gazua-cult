@@ -3177,9 +3177,24 @@ const CLOUD_REGISTRY_GIST_ID = '8bd7ddc5c6df9538c8092e1f01c9b2fa';
 STATE.cloudHost = null;
 
 async function autoDiscoverHostServer() {
+  // 1. 로컬 패스트트랙 (같은 PC에서 브라우저로 접속한 경우 0.2초 만에 로컬 8080 직결!)
+  try {
+    const localCtrl = new AbortController();
+    const localTid = setTimeout(() => localCtrl.abort(), 350);
+    const localRes = await fetch('http://127.0.0.1:8080/api/stock-prices', { signal: localCtrl.signal, mode: 'cors' });
+    clearTimeout(localTid);
+    if (localRes.ok) {
+      console.log('[가즈아교] 로컬 PC 대성전 호스트(8080) 즉각 감지 성공!');
+      STATE.cloudHost = '127.0.0.1:8080';
+      return '127.0.0.1:8080';
+    }
+  } catch (eLocal) {
+    // 로컬 서버가 없는 외부 기기(스마트폰 등)는 클라우드 레지스트리로 계속 진행
+  }
+
   const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
-  // 1차 시도: Gist Raw URL (Rate Limit 제약 없음, 항상 200 OK)
+  // 2. Gist Raw URL (Rate Limit 제약 없음, 항상 최신 호스트 감지)
   try {
     const rawRes = await fetch(`https://gist.githubusercontent.com/kicharisma2/${CLOUD_REGISTRY_GIST_ID}/raw/host.json?_nocache=${cacheBuster}`, {
       cache: 'no-store'
@@ -3200,7 +3215,7 @@ async function autoDiscoverHostServer() {
     console.warn('[가즈아교] Gist Raw 조회 알림:', e1);
   }
 
-  // 2차 시도: GitHub Gist REST API (폴백)
+  // 3. GitHub Gist REST API (폴백)
   try {
     const res = await fetch(`https://api.github.com/gists/${CLOUD_REGISTRY_GIST_ID}?_nocache=${cacheBuster}`, {
       headers: { 'Accept': 'application/vnd.github.v3+json' },
@@ -3739,6 +3754,16 @@ function addRemotePeer(info) {
   const rankLvl = info.level || 1;
   const displayName = info.name.startsWith('[Lv.') ? info.name : `[Lv.${rankLvl} ${rankTitle}] ${info.name}`;
 
+  // 내 캐릭터와 완전히 겹치지 않도록 초기 오프셋 보정
+  let spawnX = typeof info.x === 'number' ? info.x : 0;
+  let spawnY = typeof info.y === 'number' ? info.y : 0;
+  let spawnZ = typeof info.z === 'number' ? info.z : 2;
+
+  if (playerCharacter && Math.abs(spawnX - playerCharacter.group.position.x) < 0.3 && Math.abs(spawnZ - playerCharacter.group.position.z) < 0.3) {
+    spawnX += (Math.random() > 0.5 ? 1.8 : -1.8);
+    spawnZ += (Math.random() - 0.5) * 1.5;
+  }
+
   const peer = createCuteCultist({
     isPlayer: false,
     id: info.id,
@@ -3749,10 +3774,18 @@ function addRemotePeer(info) {
     hatType: info.hat || 'halo',
     wingsType: info.wings || 'angel',
     beltType: info.belt || 'long',
-    pos: { x: info.x || 0, y: info.y || 0, z: info.z || 2 }
+    pos: { x: spawnX, y: spawnY, z: spawnZ }
   });
   remotePeers[info.id] = peer;
   addNameTag(peer, false);
+
+  // 성전에 입장한 형제 신도를 환영하는 은혜 효과
+  spawnBlessingFire();
+  setTimeout(() => {
+    if (peer && remotePeers[info.id]) {
+      showSpeechBubble(peer, '† 가즈아 대성전에 당도했습니다! †');
+    }
+  }, 400);
 }
 
 function removeRemotePeer(id) {
