@@ -85,12 +85,16 @@ def find_cloudflared():
     p1 = os.path.join(base_dir, "cloudflared.exe")
     if os.path.exists(p1):
         return p1
-    # 2. _MEIPASS 내장 디렉토리
+    # 2. 부모 디렉토리 (dist/ 에서 실행된 경우 대비)
+    p_parent = os.path.join(os.path.dirname(base_dir), "cloudflared.exe")
+    if os.path.exists(p_parent):
+        return p_parent
+    # 3. _MEIPASS 내장 디렉토리
     if getattr(sys, 'frozen', False):
         p2 = os.path.join(getattr(sys, '_MEIPASS', ''), "cloudflared.exe")
         if os.path.exists(p2):
             return p2
-    # 3. 현재 작업 경로
+    # 4. 현재 작업 경로
     p3 = os.path.join(os.getcwd(), "cloudflared.exe")
     if os.path.exists(p3):
         return p3
