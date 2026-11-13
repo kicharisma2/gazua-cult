@@ -150,6 +150,18 @@ def find_cloudflared():
         if p and os.path.exists(p):
             return os.path.abspath(p)
 
+    # 8. 인터넷에서 자동 다운로드 (절대 실패 방지)
+    try:
+        print("[!] 로컬에 cloudflared.exe가 없어 초고속 자동 다운로드를 진행합니다...", flush=True)
+        download_target = os.path.join(base_dir, "cloudflared.exe")
+        cf_url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
+        urllib.request.urlretrieve(cf_url, download_target)
+        if os.path.exists(download_target):
+            print("[+] cloudflared.exe 자동 다운로드 완료!", flush=True)
+            return download_target
+    except Exception as eDl:
+        print(f"[!] cloudflared 자동 다운로드 실패: {eDl}", flush=True)
+
     return None
 
 def launch_host_desktop_window(target_url):

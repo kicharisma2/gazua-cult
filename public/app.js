@@ -3478,7 +3478,35 @@ async function connectIntegratedMultiplayer(overrideHost) {
       STATE.isOnlineMultiplayer = true;
       updateServerConnectionStatusBadge(true, host, '동기화 중...');
 
-      // 주기적 하트비트 Ping (모바일 브라우저 절전 차단 & Cloudflare 타임아웃 방지)
+      // 1. 입장 패킷 즉각 전송 (최우선 실행 & 100% 안전한 fallback 보장)
+      try {
+        const myName = (playerCharacter && playerCharacter.name) ? playerCharacter.name : (STATE.playerName || '가즈아신도');
+        const posX = (playerCharacter && playerCharacter.group) ? playerCharacter.group.position.x : 0;
+        const posY = (playerCharacter && playerCharacter.group) ? playerCharacter.group.position.y : 0;
+        const posZ = (playerCharacter && playerCharacter.group) ? playerCharacter.group.position.z : 2;
+        const rotY = (playerCharacter && playerCharacter.group) ? playerCharacter.group.rotation.y : 0;
+
+        STATE.multiWs.send(JSON.stringify({
+          type: 'join',
+          room: STATE.currentRoom,
+          name: myName,
+          level: STATE.playerLevel || 1,
+          title: STATE.playerRankTitle || '초신자',
+          robe: STATE.playerRobe || 'white',
+          hat: STATE.playerHat || 'halo',
+          wings: STATE.playerWings || 'angel',
+          belt: STATE.playerBelt || 'long',
+          x: posX,
+          y: posY,
+          z: posZ,
+          ry: rotY
+        }));
+        console.log('[가즈아교] 대성전 입장(join) 패킷 서버 전송 완료:', myName);
+      } catch (errJoin) {
+        console.error('[가즈아교] join 패킷 전송 오류:', errJoin);
+      }
+
+      // 2. 주기적 하트비트 Ping (모바일 브라우저 절전 차단 & Cloudflare 타임아웃 방지)
       clearInterval(window._wsPingTimer);
       window._wsPingTimer = setInterval(() => {
         if (STATE.multiWs && STATE.multiWs.readyState === WebSocket.OPEN) {
@@ -3486,33 +3514,17 @@ async function connectIntegratedMultiplayer(overrideHost) {
         }
       }, 12000);
 
-      // 오프라인 봇 제거
-      if (offlineBotsCreated) {
+      // 3. 오프라인 가짜 봇 청소 (에러 없이 안전하게 처리)
+      try {
         ['bot_grace', 'bot_pastor', 'bot_ant'].forEach(bid => removeRemotePeer(bid));
-        offlineBotsCreated = false;
-      }
+      } catch (eBots) {}
 
-      // 호스트 연결 완료 말풍선
-      if (playerCharacter) {
-        showSpeechBubble(playerCharacter, '† 실시간 대성전 호스트 서버와 자동 연결되었습니다! †');
-      }
-
-      // 입장 패킷 (내 풀 커스텀 외형 및 등급/레벨 포함)
-      STATE.multiWs.send(JSON.stringify({
-        type: 'join',
-        room: STATE.currentRoom,
-        name: playerCharacter.name,
-        level: STATE.playerLevel,
-        title: STATE.playerRankTitle,
-        robe: STATE.playerRobe,
-        hat: STATE.playerHat,
-        wings: STATE.playerWings,
-        belt: STATE.playerBelt,
-        x: playerCharacter.group.position.x,
-        y: playerCharacter.group.position.y,
-        z: playerCharacter.group.position.z,
-        ry: playerCharacter.group.rotation.y
-      }));
+      // 4. 호스트 연결 완료 말풍선
+      try {
+        if (playerCharacter) {
+          showSpeechBubble(playerCharacter, '† 실시간 대성전 호스트 서버와 자동 연결되었습니다! †');
+        }
+      } catch (eBubble) {}
     };
 
     STATE.multiWs.onmessage = (e) => {
@@ -3556,10 +3568,11 @@ async function connectIntegratedMultiplayer(overrideHost) {
 function handleMultiplayerMessage(msg) {
   switch (msg.type) {
     case 'welcome':
+      console.log('[가즈아교] 서버 환영 패킷(welcome) 수신 완료! 피어 수:', (msg.peers || []).length, '현재 성전 인원:', msg.count);
       // 실제 서버 접속자 수 및 내 클라이언트 ID 동기화
       if (typeof msg.count === 'number') {
         setActualOnlineCount(msg.count);
-        updateServerConnectionStatusBadge(true, getServerHost(), `${msg.count}명 접속`);
+        updateServerConnectionStatusBadge(true, getServerHost() || STATE.cloudHost, `${msg.count}명 접속`);
       }
       if (msg.id) {
         STATE.myClientId = msg.id;
@@ -3592,22 +3605,33 @@ function handleMultiplayerMessage(msg) {
       if (Array.isArray(msg.peers)) {
         msg.peers.forEach(peerInfo => {
           if (peerInfo) {
-            addRemotePeer(peerInfo);
-            addTestimonyToFeed('† 성전 안내 †', `[${peerInfo.name}] 신도님이 함께 기도 중입니다.`, 'long');
+            try {
+              addRemotePeer(peerInfo);
+              addTestimonyToFeed('† 성전 안내 †', `[${peerInfo.name}] 신도님이 함께 기도 중입니다.`, 'long');
+            } catch (ePeer) {
+              console.warn('[가즈아교] 기존 피어 생성 알림:', ePeer);
+            }
           }
         });
       }
       break;
 
     case 'peer_join':
+      console.log('[가즈아교] 새 신도 입장 패킷(peer_join) 수신:', msg.peer ? msg.peer.name : '신도', '현재 성전 인원:', msg.count);
       if (typeof msg.count === 'number') {
         setActualOnlineCount(msg.count);
-        updateServerConnectionStatusBadge(true, getServerHost(), `${msg.count}명 접속`);
+        updateServerConnectionStatusBadge(true, getServerHost() || STATE.cloudHost, `${msg.count}명 접속`);
       }
       if (msg.peer) {
-        addRemotePeer(msg.peer);
-        addTestimonyToFeed('† 성전 안내 †', `🎉 [${msg.peer.name}] 신도님이 대성전에 입장하셨습니다!`, 'long');
-        window.gajaAudio.playAmenBellSfx();
+        try {
+          addRemotePeer(msg.peer);
+          addTestimonyToFeed('† 성전 안내 †', `🎉 [${msg.peer.name}] 신도님이 대성전에 입장하셨습니다!`, 'long');
+          if (window.gajaAudio && window.gajaAudio.playAmenBellSfx) {
+            window.gajaAudio.playAmenBellSfx();
+          }
+        } catch (eJoin) {
+          console.warn('[가즈아교] 새 피어 입장 알림:', eJoin);
+        }
       }
       break;
 

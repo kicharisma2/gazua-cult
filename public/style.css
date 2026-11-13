@@ -496,7 +496,7 @@ canvas#gl-canvas {
 /* ---------------- 간증 피드 & 입력창 ---------------- */
 .middle-area {
   position: absolute;
-  bottom: 92px; /* 하단 액션 툴바와 절대 겹치지 않도록 충분한 간격 확보 */
+  bottom: 108px; /* 하단 액션 툴바와 절대 겹치지 않도록 16px 이상 넉넉한 여백 확보 */
   left: 18px;
   width: 420px; /* 더 큼직하게 확장 */
   height: auto;
