@@ -967,53 +967,36 @@ canvas#gl-canvas {
     padding-bottom: max(4px, env(safe-area-inset-bottom));
   }
 
-  /* 1. 상단 헤더: 대성전 글자 오른쪽에 룸선택기 + 레벨 + 꾸미기 + 연동 + BGM 모두 집약 */
+  /* 1. 상단 헤더: 제목 숨김 후 성전 이동 + 서버 + 이름/칭호 + 꾸미기 + 인원 + BGM 한 줄 완벽 정렬 */
   .header-bar {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     justify-content: space-between;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     width: 100%;
-    padding: 2px 4px;
+    padding: 2px 2px;
     box-sizing: border-box;
   }
 
-  /* 좌측 로고 */
+  /* 좌측 로고: 모바일에서는 사용자 요청에 따라 대성전 제목을 숨겨 상단 공간을 100% 확보 */
   .brand-section {
-    padding: 3px 6px;
-    gap: 4px;
-    flex: 0 0 auto;
-    border-radius: 8px;
-  }
-
-  .cross-icon {
-    font-size: 15px;
-  }
-
-  .brand-title {
-    font-size: 12px;
-    letter-spacing: -0.3px;
-    white-space: nowrap;
-  }
-
-  .brand-sub {
     display: none !important;
   }
 
-  /* 성전 이동 선택기: 모바일에서도 또렷하게 잘 보이도록 너비와 황금 테두리 대폭 강화 */
+  /* 성전 이동 선택기: 모바일 한 줄 레이아웃에 맞춰 알맞은 너비로 컴팩트화 */
   .room-selector {
-    flex: 1 1 auto;
-    min-width: 125px;
-    max-width: 155px;
-    padding: 3px 6px !important;
-    margin: 0 2px !important;
+    flex: 0 1 auto;
+    min-width: 95px;
+    max-width: 125px;
+    padding: 3px 4px !important;
+    margin: 0 !important;
     border-radius: 8px;
     box-sizing: border-box;
     border: 1.5px solid #f5c542 !important;
     background: rgba(22, 14, 28, 0.9) !important;
-    box-shadow: 0 0 10px rgba(245, 197, 66, 0.35) !important;
+    box-shadow: 0 0 8px rgba(245, 197, 66, 0.35) !important;
   }
 
   .room-label {
@@ -1022,10 +1005,10 @@ canvas#gl-canvas {
 
   .room-select {
     width: 100% !important;
-    font-size: 11.5px !important;
+    font-size: 11px !important;
     font-weight: 700 !important;
     color: #f5c542 !important;
-    padding: 3px 4px !important;
+    padding: 2px 2px !important;
     border-radius: 6px;
     background: transparent !important;
     border: none !important;
@@ -1033,58 +1016,100 @@ canvas#gl-canvas {
     text-overflow: ellipsis;
   }
 
-  /* 우측 액션 버튼들: 레벨, 꾸미기, 연동, 카운터, BGM */
+  /* 우측 액션 버튼들: 서버, 레벨/이름, 꾸미기, 카운터, BGM 모두 노출 */
   .header-right {
     display: flex !important;
     align-items: center;
-    gap: 3px !important;
-    flex: 0 0 auto;
+    gap: 4px !important;
+    flex: 1 1 auto;
     justify-content: flex-end;
   }
 
   .custom-btn-top {
-    padding: 3px 5px !important;
+    padding: 3px 6px !important;
     font-size: 10px !important;
     border-radius: 6px !important;
-    gap: 2px !important;
+    gap: 3px !important;
     white-space: nowrap !important;
   }
 
-  #btnServerConfig #serverStatusText {
-    display: none !important; /* 모바일에서는 🟢 아이콘만 표시하여 가로 공간 절약 */
+  /* 서버 연동 버튼: 모바일에서는 상태 원형 뱃지로 슬림화 */
+  #btnServerConfig {
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
+  #btnServerConfig #serverStatusText {
+    display: none !important;
+  }
+
+  #btnServerConfig #serverStatusIcon {
+    font-size: 12px !important;
+    margin: 0 !important;
+  }
+
+  /* 이름 바꾸기 및 등급 호칭 버튼 */
   #btnOpenMissions {
-    padding: 3px 5px !important;
+    padding: 3px 6px !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
   #btnOpenMissions #headerRankBadge {
-    font-size: 9.5px;
-    max-width: 58px;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    max-width: 80px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  #btnOpenCustom span:last-child {
-    display: none !important; /* "신도 꾸미기" 글자 숨기고 👗 아이콘만 표시 */
+  /* 신도 꾸미기 버튼: 👗 아이콘 + 꾸미기 글자 선명하게 노출 */
+  #btnOpenCustom {
+    padding: 3px 6px !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
+  #btnOpenCustom .custom-text {
+    display: inline-block !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+  }
+
+  /* 합심 기도 인원수: "합심 기도:" 접두사 숨기고 인원수만 콤팩트하게 */
   .cult-counter {
-    padding: 3px 5px !important;
-    font-size: 9.5px !important;
+    padding: 3px 6px !important;
+    font-size: 10px !important;
     gap: 2px !important;
     border-radius: 6px !important;
     white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
-  .cult-counter span {
-    font-size: 9.5px !important;
+  .cult-counter .counter-label {
+    display: none !important;
+  }
+
+  .cult-counter .pulse-dot {
+    margin-right: 2px !important;
+  }
+
+  .cult-counter span, .cult-counter b {
+    font-size: 10px !important;
   }
 
   #bgmBtn {
     width: 26px !important;
     height: 26px !important;
+    min-width: 26px !important;
     font-size: 11px !important;
     padding: 0 !important;
     border-radius: 6px !important;
@@ -1143,12 +1168,12 @@ canvas#gl-canvas {
     height: 4px !important;
   }
 
-  /* 3. 우측 미니게임 사이드바: 3D 화면을 가리지 않게 오른쪽 상단 중간에 콤팩트 원형 버블 배치 */
+  /* 3. 우측 미니게임 사이드바: 상단을 가리지 않도록 화면 중앙 우측으로 낮춰 배치 */
   .event-sidebar {
     right: 4px;
-    top: 28%;
+    top: 52%;
     transform: translateY(-50%);
-    gap: 5px;
+    gap: 4px;
     z-index: 35;
   }
 

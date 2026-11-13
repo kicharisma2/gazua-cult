@@ -18,7 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&display=swap" rel="stylesheet">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=20261113_final">
+  <link rel="stylesheet" href="style.css?v=20261113_mobile_ui">
 
   <!-- Three.js & OrbitControls -->
   <script src="three.min.js"></script>
@@ -66,24 +66,19 @@
           <span id="serverStatusText">접속 중...</span>
         </button>
 
-        <button id="btnShareLink" class="custom-btn-top glass clickable" style="border-color:#38bdf8; color:#38bdf8;" title="현재 대성전 초대 링크를 클립보드에 복사하여 다른 기기나 친구에게 공유합니다.">
-          <span>🔗</span>
-          <span>초대 복사</span>
-        </button>
-
-        <button id="btnOpenMissions" class="custom-btn-top glass clickable" style="border-color:#f5c542; color:#f5c542;" title="은혜 미션 수행 및 레벨/등급 호칭 확인">
+        <button id="btnOpenMissions" class="custom-btn-top glass clickable" style="border-color:#f5c542; color:#f5c542;" title="은혜 미션 수행 및 레벨/등급 호칭/이름 변경">
           <span>📜</span>
           <span id="headerRankBadge">Lv.1 초신자</span>
         </button>
 
         <button id="btnOpenCustom" class="custom-btn-top glass clickable" title="성의, 머리장식, 날개, 직분 변경">
           <span>👗</span>
-          <span>신도 꾸미기</span>
+          <span class="custom-text">신도 꾸미기</span>
         </button>
 
         <div class="cult-counter glass clickable" title="현재 같은 성전에서 합심 기도 중인 실제 신도 수">
           <div class="pulse-dot"></div>
-          <span>합심 기도: <b id="cultistCount" class="counter-num">1</b>명</span>
+          <span class="counter-label">합심 기도: </span><b id="cultistCount" class="counter-num">1</b><span>명</span>
         </div>
 
         <button id="bgmBtn" class="icon-btn glass clickable" title="장엄한 파이프오르간 성가 찬양 ON/OFF">
@@ -754,7 +749,7 @@
   </div>
 
   <!-- Sound & Application Scripts -->
-  <script src="audio.js?v=20261112_live"></script>
-  <script src="app.js?v=20261113_final"></script>
+  <script src="audio.js?v=20261113_mobile_ui"></script>
+  <script src="app.js?v=20261113_mobile_ui"></script>
 </body>
 </html>
