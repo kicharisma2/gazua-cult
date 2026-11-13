@@ -519,6 +519,12 @@ def handle_websocket_loop(handler):
                     'name': msg.get('name', '신도')
                 })
 
+            elif mtype == 'summit_bell':
+                broadcast_room(current_room, {
+                    'type': 'peer_summit_bell',
+                    'name': msg.get('name', '신도')
+                })
+
         except Exception as e:
             print(f"[WS_MSG_EXCEPTION] {client_id}: {e}", flush=True)
             break

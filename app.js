@@ -86,7 +86,47 @@ let DAILY_MISSIONS = [
   { id: 'boss', title: '공매도 마왕 퇴마 공격', desc: '서관의 마왕에게 성수/기도 타격', target: 3, current: 0, rewardExp: 70, icon: '⚡', done: false },
   { id: 'testimony', title: '은혜의 간증 올리기', desc: '신도 집회에 간증 1회 작성', target: 1, current: 0, rewardExp: 40, icon: '📜', done: false },
   { id: 'offering', title: '영끌 황금 헌금 바치기', desc: '제단에 헌금 투척', target: 1, current: 0, rewardExp: 40, icon: '💰', done: false },
-  { id: 'pilgrimage', title: '성전 기물 뛰어넘기', desc: '장의자나 제단 3회 뛰어넘기', target: 3, current: 0, rewardExp: 50, icon: '🏛️', done: false }
+  { id: 'pilgrimage', title: '성전 기물 뛰어넘기', desc: '장의자나 제단 3회 뛰어넘기', target: 3, current: 0, rewardExp: 50, icon: '🏛️', done: false },
+  { id: 'obby', title: '천상 점프맵 정상 정복', desc: '로블록스식 하늘 계단을 올라 승천의 종 울리기', target: 1, current: 0, rewardExp: 120, icon: '🏰', done: false }
+];
+
+// ==========================================
+// 로블록스식 천상 떡상 점프맵 발판 데이터 (Obby Platforms)
+// ==========================================
+const OBBY_PLATFORMS = [
+  // 1구간: [신앙의 황금 계단] (Z: -35 ~ -45, 높이 Y: 0.8 ~ 3.2m)
+  { id: 'stair1', type: 'box', x: 0, y: 0.8, z: -35, w: 4.5, d: 2.2, h: 0.4, color: 0xf5c542, emissive: 0x997700 },
+  { id: 'stair2', type: 'box', x: 0, y: 1.6, z: -38, w: 4.5, d: 2.2, h: 0.4, color: 0xf5c542, emissive: 0x997700 },
+  { id: 'stair3', type: 'box', x: 0, y: 2.4, z: -41, w: 4.5, d: 2.2, h: 0.4, color: 0xf5c542, emissive: 0x997700 },
+  { id: 'stair4', type: 'box', x: 0, y: 3.2, z: -44, w: 4.5, d: 2.2, h: 0.4, color: 0xf5c542, emissive: 0x997700 },
+
+  // 1구간 쉼터: [제1 떡상 쉼터] (Y: 4.0m)
+  { id: 'rest1', type: 'box', x: 0, y: 4.0, z: -48, w: 7.0, d: 5.0, h: 0.5, color: 0x2b1c20, emissive: 0x4a0e17 },
+
+  // 2구간: [양봉 캔들 징검다리 기둥] (Z: -52 ~ -63, 높이 Y: 5.0 ~ 8.0m)
+  { id: 'candle1', type: 'cyl', x: -2.8, y: 5.0, z: -52, r: 1.4, h: 0.6, color: 0xff3352, emissive: 0xaa1122 },
+  { id: 'candle2', type: 'cyl', x: 2.8, y: 6.0, z: -55.5, r: 1.4, h: 0.6, color: 0xff3352, emissive: 0xaa1122 },
+  { id: 'candle3', type: 'cyl', x: -2.2, y: 7.0, z: -59, r: 1.3, h: 0.6, color: 0xff3352, emissive: 0xaa1122 },
+  { id: 'candle4', type: 'cyl', x: 2.2, y: 8.0, z: -62.5, r: 1.3, h: 0.6, color: 0xff3352, emissive: 0xaa1122 },
+
+  // 2구간 쉼터: [제2 천상 구름 쉼터] (Y: 9.0m)
+  { id: 'rest2', type: 'box', x: 0, y: 9.0, z: -67, w: 7.5, d: 5.5, h: 0.5, color: 0x2b1c20, emissive: 0x1d4ed8 },
+
+  // 3구간: [지그재그 크리스탈 네온 디딤돌] (Z: -71 ~ -78, 높이 Y: 10.2 ~ 12.6m)
+  { id: 'step1', type: 'box', x: -3.6, y: 10.2, z: -71.5, w: 2.5, d: 2.5, h: 0.4, color: 0x38bdf8, emissive: 0x0284c7 },
+  { id: 'step2', type: 'box', x: 0.0, y: 11.4, z: -74.5, w: 2.5, d: 2.5, h: 0.4, color: 0xc084fc, emissive: 0x9333ea },
+  { id: 'step3', type: 'box', x: 3.6, y: 12.6, z: -77.5, w: 2.5, d: 2.5, h: 0.4, color: 0xf5c542, emissive: 0xca8a04 },
+
+  // 4구간: [승천 나선형 타워 계단] (타워 중심 X=0, Z=-84, 높이 Y: 13.6 ~ 17.8m)
+  { id: 'tower_base', type: 'box', x: 0, y: 13.6, z: -82, w: 5.5, d: 4.5, h: 0.5, color: 0x2b1c20, emissive: 0x2e1065 },
+  { id: 'spiral1', type: 'box', x: -3.2, y: 14.8, z: -84.5, w: 2.4, d: 2.4, h: 0.4, color: 0xf5c542, emissive: 0x997700 },
+  { id: 'spiral2', type: 'box', x: -1.8, y: 15.8, z: -87.4, w: 2.4, d: 2.4, h: 0.4, color: 0xff3352, emissive: 0xaa1122 },
+  { id: 'spiral3', type: 'box', x: 1.8, y: 16.8, z: -87.4, w: 2.4, d: 2.4, h: 0.4, color: 0x38bdf8, emissive: 0x0284c7 },
+  { id: 'spiral4', type: 'box', x: 3.2, y: 17.8, z: -84.5, w: 2.4, d: 2.4, h: 0.4, color: 0xc084fc, emissive: 0x9333ea },
+
+  // 5구간 최종 정상: [천상 떡상 정상 천문대 (Heavenly Peak Observatory)]
+  // X=0, Y=19.0, Z=-84 (반경 6.5m 거대한 황금 원형 전망대)
+  { id: 'summit', type: 'cyl', x: 0, y: 19.0, z: -84, r: 6.5, h: 0.6, color: 0xffd700, emissive: 0xb45309 }
 ];
 
 // ==========================================
@@ -201,9 +241,12 @@ let coinPondGroup = null;
 let revivalCircleGroup = null;
 let bossGroup = null, bossHpBarMesh = null, bossHpFillMesh = null;
 let goldAntMesh = null;
+let summitBellMesh = null;   // 천상 정상 승천의 종
+let summitWarpMesh = null;   // 정상에서 1층으로 귀환하는 포탈
+let groundWarpMesh = null;   // 1층에서 정상으로 직통 워프하는 포탈
 let playerCharacter;
 let floorMesh;
-let floorMeshes = []; // 본당, 카페, 통곡실, 야외광장 바닥 콜라이더
+let floorMeshes = []; // 본당, 카페, 통곡실, 야외광장, 2층, 점프맵 발판 바닥 콜라이더
 let fountainParticles = [];
 let raycaster, mousePointer;
 let clickMarkerMesh;
@@ -946,19 +989,76 @@ function buildMegachurch() {
   });
 
   // ----------------------------------------------------
-  // 5. [2층: 세력 영생 VIP 성가대 테라스 발코니] (Choir Balcony)
+  // 5. [새로운 2층: 좌우 복층 발코니 테라스 - 중앙 시야 100% 개방 & 안 거슬리는 측면 배치]
   // ----------------------------------------------------
-  const balconyFloor = new THREE.Mesh(new THREE.BoxGeometry(24, 0.5, 6), marbleMat);
-  balconyFloor.position.set(0, 3.2, 22.5);
-  churchGroup.add(balconyFloor);
-  floorMeshes.push(balconyFloor);
+  // (1) 서관 2층: 세력 영생 VIP 라운지 테라스
+  const vipFloor = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.45, 24), marbleMat);
+  vipFloor.position.set(-13.5, 4.2, 3);
+  churchGroup.add(vipFloor);
+  floorMeshes.push(vipFloor);
 
-  // 황금 난간
-  const railing = new THREE.Mesh(new THREE.BoxGeometry(24, 0.9, 0.2), goldMat);
-  railing.position.set(0, 3.85, 19.5);
-  churchGroup.add(railing);
+  // VIP 황금 난간
+  const vipRailing = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.85, 24), goldMat);
+  vipRailing.position.set(-10.8, 4.8, 3);
+  churchGroup.add(vipRailing);
 
-  createSpaceSign(0, 5.2, 22.5, "👑 2층 세력 영생 VIP 성가대석", 0xf5c542, churchGroup);
+  // VIP 2층으로 오르는 우아한 대리석/황금 계단 6단 (Z: 15 ~ 21)
+  for (let si = 0; si < 6; si++) {
+    const sStep = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.7, 1.0), marbleMat);
+    sStep.position.set(-13.5, (si + 1) * 0.7 - 0.35, 20.5 - si * 1.0);
+    churchGroup.add(sStep);
+    floorMeshes.push(sStep);
+  }
+
+  // VIP 소파 & 샴페인 테이블 3세트
+  for (let vi = -6; vi <= 6; vi += 6) {
+    const sofa = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.6, 1.4), redCarpetMat);
+    sofa.position.set(-13.5, 4.7, 3 + vi);
+    churchGroup.add(sofa);
+    const table = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.6, 12), goldMat);
+    table.position.set(-13.5, 4.7, 3 + vi + 1.6);
+    churchGroup.add(table);
+  }
+  createSpaceSign(-13.5, 6.2, 3, "👑 [2층 서관] 세력 영생 VIP 라운지", 0xf5c542, churchGroup);
+
+  // (2) 동관 2층: 은혜 충만 천상 성가대석 테라스
+  const choirFloor = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.45, 24), marbleMat);
+  choirFloor.position.set(13.5, 4.2, 3);
+  churchGroup.add(choirFloor);
+  floorMeshes.push(choirFloor);
+
+  // 성가대 황금 난간
+  const choirRailing = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.85, 24), goldMat);
+  choirRailing.position.set(10.8, 4.8, 3);
+  churchGroup.add(choirRailing);
+
+  // 성가대 2층으로 오르는 계단 6단 (Z: 15 ~ 21)
+  for (let si = 0; si < 6; si++) {
+    const cStep = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.7, 1.0), marbleMat);
+    cStep.position.set(13.5, (si + 1) * 0.7 - 0.35, 20.5 - si * 1.0);
+    churchGroup.add(cStep);
+    floorMeshes.push(cStep);
+  }
+
+  // 천상 파이프오르간 황금 파이프 조형물
+  const choirOrganGroup = new THREE.Group();
+  choirOrganGroup.position.set(13.5, 4.4, 0);
+  for (let pi = -2.0; pi <= 2.0; pi += 0.35) {
+    const pipeH = 3.5 - Math.abs(pi) * 0.8;
+    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, pipeH, 12), goldMat);
+    pipe.position.set(pi, pipeH / 2, -1.8);
+    choirOrganGroup.add(pipe);
+  }
+  churchGroup.add(choirOrganGroup);
+  createSpaceSign(13.5, 6.2, 3, "🎵 [2층 동관] 은혜 충만 성가대석", 0x38bdf8, churchGroup);
+
+  // ----------------------------------------------------
+  // (3) 본당 ➔ 북관 연결 대리석 회랑 복도 (Z: -16 ~ -20)
+  // ----------------------------------------------------
+  const hallwayN = new THREE.Mesh(new THREE.BoxGeometry(7, 0.4, 11), marbleMat);
+  hallwayN.position.set(0, 0.1, -19.5);
+  churchGroup.add(hallwayN);
+  floorMeshes.push(hallwayN);
 
   // ----------------------------------------------------
   // 6. [북관: 100억 슈퍼고래 영생 참배원] (Whale Sanctuary)
@@ -1119,6 +1219,184 @@ function buildMegachurch() {
   revivalCircleGroup = revivalCircleGroupLocal;
   churchGroup.add(revivalCircleGroupLocal);
   createSpaceSign(30, 4.2, -6, "🔥 [동관] 전 신도 합심 통성기도 성령존 (진입 시 양봉 게이지 2배 가속!)", 0xff334b, churchGroup);
+
+  // ----------------------------------------------------
+  // 10. [북관 후방: 천상 떡상 로블록스 점프맵 탐험 코스 (Roblox-style Obby)]
+  // ----------------------------------------------------
+  const obbyGroup = new THREE.Group();
+
+  // (1) 북관 고래 참배원 -> 점프맵 출발선 연결 브릿지 (Z: -26 ~ -33)
+  const obbyBridge = new THREE.Mesh(new THREE.BoxGeometry(6.5, 0.4, 8), marbleMat);
+  obbyBridge.position.set(0, 0.1, -29.5);
+  obbyGroup.add(obbyBridge);
+  floorMeshes.push(obbyBridge);
+
+  // (2) 점프맵 하단 안전 구름 지면 (Z: -32 ~ -92, Y: -0.2)
+  const safetyCloudMat = new THREE.MeshStandardMaterial({
+    color: 0x11162b,
+    emissive: 0x0f172a,
+    emissiveIntensity: 0.4,
+    roughness: 0.5
+  });
+  const obbySafetyFloor = new THREE.Mesh(new THREE.BoxGeometry(44, 0.4, 62), safetyCloudMat);
+  obbySafetyFloor.position.set(0, -0.2, -62);
+  obbyGroup.add(obbySafetyFloor);
+  floorMeshes.push(obbySafetyFloor);
+
+  // (3) 출발 게이트 아치 및 안내 홀로그램
+  const gateL = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 4.5, 16), goldMat);
+  gateL.position.set(-3.2, 2.25, -33.0);
+  obbyGroup.add(gateL);
+  const gateR = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 4.5, 16), goldMat);
+  gateR.position.set(3.2, 2.25, -33.0);
+  obbyGroup.add(gateR);
+  const gateTop = new THREE.Mesh(new THREE.BoxGeometry(7.0, 0.5, 0.6), goldMat);
+  gateTop.position.set(0, 4.5, -33.0);
+  obbyGroup.add(gateTop);
+
+  createSpaceSign(0, 5.5, -33.0, "🏰 [천상 점프맵] 떡상 하늘 계단 (점프하여 정상의 황금종을 울려라!)", 0xf5c542, obbyGroup);
+
+  // (4) 1층 출발선 직통 승천 포탈 (지상에서 클릭/접근 시 정상 전망대로 순간이동)
+  const gWarpGroup = new THREE.Group();
+  gWarpGroup.position.set(4.0, 0.2, -33.0);
+  const gWarpBase = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 0.3, 24), goldMat);
+  gWarpGroup.add(gWarpBase);
+  const gWarpRing = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.15, 16, 32), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+  gWarpRing.rotation.x = Math.PI / 2;
+  gWarpRing.position.y = 0.2;
+  gWarpGroup.add(gWarpRing);
+  const gWarpLight = new THREE.PointLight(0x38bdf8, 2.0, 8);
+  gWarpLight.position.y = 1.0;
+  gWarpGroup.add(gWarpLight);
+  groundWarpMesh = gWarpGroup;
+  obbyGroup.add(gWarpGroup);
+  floorMeshes.push(gWarpBase);
+  createSpaceSign(4.0, 2.2, -33.0, "🌀 [직통 승천 포탈] 정상 바로가기", 0x38bdf8, obbyGroup);
+
+  // (5) OBBY_PLATFORMS 메쉬 생성 및 배치
+  OBBY_PLATFORMS.forEach(plat => {
+    let platMesh;
+    const pMat = new THREE.MeshStandardMaterial({
+      color: plat.color,
+      emissive: plat.emissive || 0x000000,
+      emissiveIntensity: 0.65,
+      roughness: 0.25,
+      metalness: 0.35
+    });
+
+    if (plat.type === 'box') {
+      platMesh = new THREE.Mesh(new THREE.BoxGeometry(plat.w, plat.h, plat.d), pMat);
+      platMesh.position.set(plat.x, plat.y - plat.h / 2, plat.z);
+    } else if (plat.type === 'cyl') {
+      platMesh = new THREE.Mesh(new THREE.CylinderGeometry(plat.r, plat.r, plat.h, 24), pMat);
+      platMesh.position.set(plat.x, plat.y - plat.h / 2, plat.z);
+    }
+
+    if (platMesh) {
+      obbyGroup.add(platMesh);
+      floorMeshes.push(platMesh);
+    }
+
+    // 캔들 기둥 상단 장식 불꽃
+    if (plat.id.startsWith('candle')) {
+      const candleWick = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 8), goldMat);
+      candleWick.position.set(plat.x, plat.y + 0.25, plat.z);
+      obbyGroup.add(candleWick);
+
+      const flame = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), new THREE.MeshBasicMaterial({ color: 0xff3352 }));
+      flame.position.set(plat.x, plat.y + 0.55, plat.z);
+      obbyGroup.add(flame);
+
+      const pLight = new THREE.PointLight(0xff3352, 1.8, 10);
+      pLight.position.set(plat.x, plat.y + 1.2, plat.z);
+      obbyGroup.add(pLight);
+    }
+
+    // 쉼터 표지판
+    if (plat.id === 'rest1') {
+      createSpaceSign(0, plat.y + 2.4, plat.z, "🚩 [제1 떡상 쉼터] (고도 4M - 믿음 충전)", 0xf5c542, obbyGroup);
+    } else if (plat.id === 'rest2') {
+      createSpaceSign(0, plat.y + 2.4, plat.z, "☁️ [제2 천상 구름 쉼터] (고도 9M - 영생 돌파)", 0x38bdf8, obbyGroup);
+    }
+  });
+
+  // (6) 제5구간 최종 정상: [천상 떡상 정상 천문대 (Heavenly Peak Observatory)]
+  // X=0, Y=19.0, Z=-84
+  const summitGroup = new THREE.Group();
+  summitGroup.position.set(0, 19.0, -84);
+
+  // 정상 황금 난간 둘레
+  const summitRailing = new THREE.Mesh(new THREE.TorusGeometry(6.3, 0.18, 16, 48), goldMat);
+  summitRailing.rotation.x = Math.PI / 2;
+  summitRailing.position.y = 0.9;
+  summitGroup.add(summitRailing);
+
+  // 정상 8방위 황금 횃불 기둥
+  for (let ai = 0; ai < 8; ai++) {
+    const angle = (ai / 8) * Math.PI * 2;
+    const px = Math.cos(angle) * 6.0;
+    const pz = Math.sin(angle) * 6.0;
+    const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 1.6, 12), goldMat);
+    pillar.position.set(px, 0.8, pz);
+    summitGroup.add(pillar);
+
+    const flame = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffd700 }));
+    flame.position.set(px, 1.7, pz);
+    summitGroup.add(flame);
+  }
+
+  // 정상 중앙 대형 승천의 황금 종 (Summit Golden Bell)
+  const bellGroup = new THREE.Group();
+  bellGroup.position.set(0, 1.6, 0);
+
+  // 종 지지대 아치
+  const bellFrameL = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 3.2, 12), goldMat);
+  bellFrameL.position.set(-1.6, 1.6, 0);
+  bellGroup.add(bellFrameL);
+  const bellFrameR = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 3.2, 12), goldMat);
+  bellFrameR.position.set(1.6, 1.6, 0);
+  bellGroup.add(bellFrameR);
+  const bellBeam = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.35, 0.35), goldMat);
+  bellBeam.position.set(0, 3.1, 0);
+  bellGroup.add(bellBeam);
+
+  // 황금 종 본체
+  const bellBody = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.1, 1.4, 24), goldMat);
+  bellBody.position.set(0, 2.0, 0);
+  bellGroup.add(bellBody);
+  const bellDome = new THREE.Mesh(new THREE.SphereGeometry(0.52, 16, 16), goldMat);
+  bellDome.position.set(0, 2.7, 0);
+  bellGroup.add(bellDome);
+  const bellClapper = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  bellClapper.position.set(0, 1.25, 0);
+  bellGroup.add(bellClapper);
+
+  const bellLight = new THREE.PointLight(0xffd700, 3.5, 25);
+  bellLight.position.set(0, 2.2, 0);
+  bellGroup.add(bellLight);
+
+  summitBellMesh = bellGroup;
+  summitGroup.add(bellGroup);
+
+  // 천상 정상 표지판
+  createSpaceSign(0, 23.5, -84, "🔔 [천상 정상] 승천의 황금 종 (터치하여 타종! +300 EXP)", 0xffd700, churchGroup);
+
+  // 1층 귀환 워프 포탈
+  const sWarpGroup = new THREE.Group();
+  sWarpGroup.position.set(0, 0.15, 3.8);
+  const sWarpRing = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.14, 16, 32), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+  sWarpRing.rotation.x = Math.PI / 2;
+  sWarpRing.position.y = 0.2;
+  sWarpGroup.add(sWarpRing);
+  const sWarpLight = new THREE.PointLight(0xf59e0b, 2.0, 8);
+  sWarpLight.position.y = 1.0;
+  sWarpGroup.add(sWarpLight);
+  summitWarpMesh = sWarpGroup;
+  summitGroup.add(sWarpGroup);
+  createSpaceSign(0, 21.0, -80.2, "🌀 [1층 귀환 포탈] 대성전 본당으로", 0xf59e0b, churchGroup);
+
+  churchGroup.add(summitGroup);
+  churchGroup.add(obbyGroup);
 }
 
 // 3D 공간 표지판 - 어디서 보든 정면을 향하는 고화질 네온 빌보드 홀로그램
@@ -1970,12 +2248,56 @@ function updatePlayerNameTag() {
 // 성전 바닥 및 제단 단상/계단 높이 계산 (Stairs & Dais Height)
 // ----------------------------------------------------
 function getTempleFloorY(x, z) {
-  // 1. 2층 세력 영생 VIP 성가대 테라스 발코니
-  if (z >= 19.5 && z <= 24.5 && Math.abs(x) <= 12) {
-    return 3.2;
+  // 1. [신규 2층: 좌우 복층 발코니 테라스 - 중앙 시야 100% 개방 & 안 거슬리는 측면 배치]
+  // (1) 서관 2층: 세력 영생 VIP 라운지 테라스 (Y: 4.2)
+  if (x >= -16.5 && x <= -10.5 && z >= -9.0 && z <= 15.0) {
+    return 4.2;
+  }
+  // 서관 2층 오르는 대리석 계단 6단 (Z: 15.0 ~ 21.0)
+  if (x >= -16.0 && x <= -11.0 && z > 15.0 && z <= 21.0) {
+    return 4.2 * (21.0 - z) / 6.0;
   }
 
-  // 2. 본당 제단 단상 3단 (최상단 제단 단상: Z <= -7.6 && Z >= -14.6, |X| <= 9)
+  // (2) 동관 2층: 은혜 충만 성가대석 테라스 (Y: 4.2)
+  if (x >= 10.5 && x <= 16.5 && z >= -9.0 && z <= 15.0) {
+    return 4.2;
+  }
+  // 동관 2층 오르는 대리석 계단 6단 (Z: 15.0 ~ 21.0)
+  if (x >= 11.0 && x <= 16.0 && z > 15.0 && z <= 21.0) {
+    return 4.2 * (21.0 - z) / 6.0;
+  }
+
+  // 2. [로블록스식 천상 점프맵 & 정상 천문대 (Z <= -33.0)]
+  if (z <= -33.0) {
+    // 5구간 최종 정상: 천상 떡상 정상 천문대 (원형 반경 6.5m, 중심 0, -84)
+    const distSummit = Math.hypot(x - 0, z - (-84));
+    if (distSummit <= 6.5) {
+      return 19.0;
+    }
+
+    // 1~4구간 점프맵 발판 충돌 높이 검사
+    for (let pi = 0; pi < OBBY_PLATFORMS.length; pi++) {
+      const p = OBBY_PLATFORMS[pi];
+      if (p.id === 'summit') continue;
+      if (p.type === 'box') {
+        const halfW = p.w / 2;
+        const halfD = p.d / 2;
+        if (x >= p.x - halfW && x <= p.x + halfW && z >= p.z - halfD && z <= p.z + halfD) {
+          return p.y;
+        }
+      } else if (p.type === 'cyl') {
+        const distP = Math.hypot(x - p.x, z - p.z);
+        if (distP <= p.r) {
+          return p.y;
+        }
+      }
+    }
+
+    // 점프맵 하단 안전 구름 바닥 (낙하 시 서 있을 수 있는 지면)
+    return 0;
+  }
+
+  // 3. 본당 제단 단상 3단 (최상단 제단 단상: Z <= -7.6 && Z >= -14.6, |X| <= 9)
   if (z <= -7.6 && z >= -14.6 && Math.abs(x) <= 9.0) {
     return 1.35;
   }
@@ -2224,6 +2546,9 @@ function setupMovementControls() {
     if (bossGroup && bossGroup.visible) interactTargets.push(bossGroup);
     if (throneMesh) interactTargets.push(throneMesh);
     if (goldAntMesh) interactTargets.push(goldAntMesh);
+    if (summitBellMesh) interactTargets.push(summitBellMesh);
+    if (summitWarpMesh) interactTargets.push(summitWarpMesh);
+    if (groundWarpMesh) interactTargets.push(groundWarpMesh);
 
     const hitInteract = raycaster.intersectObjects(interactTargets, true);
     if (hitInteract.length > 0) {
@@ -2255,6 +2580,15 @@ function setupMovementControls() {
       } else if (root === goldAntMesh) {
         interactWithGoldAnt();
         return;
+      } else if (root === summitBellMesh) {
+        ringSummitBell();
+        return;
+      } else if (root === summitWarpMesh) {
+        teleportToZone('main');
+        return;
+      } else if (root === groundWarpMesh) {
+        teleportToZone('observatory');
+        return;
       }
     }
 
@@ -2264,7 +2598,7 @@ function setupMovementControls() {
     if (intersects.length > 0) {
       const hit = intersects[0].point;
       const targetX = Math.max(-46, Math.min(46, hit.x));
-      const targetZ = Math.max(-15.5, Math.min(67, hit.z));
+      const targetZ = Math.max(-92, Math.min(68, hit.z));
       const floorY = getTempleFloorY(targetX, targetZ);
 
       STATE.clickTargetPos = new THREE.Vector3(targetX, floorY, targetZ);
@@ -2475,9 +2809,9 @@ function updatePlayerMovement(dt) {
   curPos.z = collision.z;
   playerCharacter.standingPlatformY = collision.platformY;
 
-  // 맵 전체 외곽 경계 (성전 본당 단상 끝 -15.5m까지 개방)
+  // 맵 전체 외곽 경계 (북관 고래 참배원 및 천상 점프맵 Z: -92m까지 전면 개방)
   curPos.x = Math.max(-46, Math.min(46, curPos.x));
-  curPos.z = Math.max(-15.5, Math.min(67, curPos.z));
+  curPos.z = Math.max(-92, Math.min(68, curPos.z));
 
   // 현재 위치에 따른 성전 바닥 / 계단 단상 / 2층 테라스 지면 높이 갱신
   playerCharacter.baseY = getTempleFloorY(curPos.x, curPos.z);
@@ -2728,6 +3062,39 @@ function checkProximityInteractions() {
     }
   }
 
+  // 9. 천상 정상 승천의 황금 종 (x ≈ 0, z ≈ -84, y ≈ 19)
+  if (!target && summitBellMesh) {
+    const distBell = Math.hypot(px - 0, pz - (-84));
+    if (distBell < 7.5 && playerCharacter.group.position.y >= 16.0) {
+      target = 'summit_bell';
+      icon = '🔔';
+      text = '천상 정상 승천의 종 타종! (+300 EXP)';
+      isGold = true;
+    }
+  }
+
+  // 10. 천상 정상 1층 귀환 포탈 (x ≈ 0, z ≈ -80.2, y ≈ 19)
+  if (!target && summitWarpMesh) {
+    const distSWarp = Math.hypot(px - 0, pz - (-80.2));
+    if (distSWarp < 4.0 && playerCharacter.group.position.y >= 16.0) {
+      target = 'summit_warp';
+      icon = '🌀';
+      text = '1층 대성전으로 귀환 워프';
+      isGold = false;
+    }
+  }
+
+  // 11. 1층 점프맵 출발선 직통 승천 포탈 (x ≈ 4.0, z ≈ -33.0)
+  if (!target && groundWarpMesh) {
+    const distGWarp = Math.hypot(px - 4.0, pz - (-33.0));
+    if (distGWarp < 4.0 && playerCharacter.group.position.y <= 3.0) {
+      target = 'ground_warp';
+      icon = '✨';
+      text = '천상 정상 천문대 직통 워프';
+      isGold = true;
+    }
+  }
+
   currentInteractTarget = target;
 
   if (target) {
@@ -2768,6 +3135,12 @@ function triggerProximityAction() {
     interactWithCoinPond();
   } else if (currentInteractTarget === 'revival_zone') {
     interactWithRevivalCircle();
+  } else if (currentInteractTarget === 'summit_bell') {
+    ringSummitBell();
+  } else if (currentInteractTarget === 'summit_warp') {
+    teleportToZone('main');
+  } else if (currentInteractTarget === 'ground_warp') {
+    teleportToZone('observatory');
   }
 }
 
@@ -3700,6 +4073,15 @@ function handleMultiplayerMessage(msg) {
       }
       break;
 
+    case 'peer_summit_bell':
+      addTestimonyToFeed('🔔 천상 정상 정복 🔔', `🎉 [${msg.name}] 신도님이 천상 떡상 점프맵 정상을 정복하고 승천의 황금 종을 울렸습니다!`, 'long');
+      if (remotePeers[msg.id]) {
+        showSpeechBubble(remotePeers[msg.id], '🔔 천상 정상 정복! 떡상 승천 만세!');
+      }
+      spawnBlessingFire();
+      if (window.gajaAudio) window.gajaAudio.playLevelUpSfx();
+      break;
+
     case 'peer_action':
       if (remotePeers[msg.id]) {
         const peer = remotePeers[msg.id];
@@ -3944,8 +4326,17 @@ window.teleportToZone = function(zoneKey) {
     tx = 28; ty = 0; tz = 8; ry = -Math.PI / 2;
     msg = '🌲 양봉의 숲 성물 정원에 도착했습니다! 숨겨진 황금 개미를 찾아보세요!';
   } else if (zoneKey === 'observatory') {
-    tx = 0; ty = 7.5; tz = 22; ry = 0;
-    msg = '🌌 천상의 2층 전망대에 올랐습니다! 온 성전이 한눈에 내려다보입니다!';
+    tx = 0; ty = 19.5; tz = -84; ry = Math.PI;
+    msg = '🏰 [천상 정상 천문대] 승천의 황금 종 정상에 도달했습니다! 온 가즈아 성전이 한눈에 내려다보입니다!';
+  } else if (zoneKey === 'vip') {
+    tx = -13.5; ty = 4.3; tz = 3; ry = -Math.PI / 2;
+    msg = '👑 [2층 서관] 세력 영생 VIP 라운지에 도착했습니다!';
+  } else if (zoneKey === 'choir') {
+    tx = 13.5; ty = 4.3; tz = 3; ry = Math.PI / 2;
+    msg = '🎵 [2층 동관] 은혜 충만 성가대석에 도착했습니다!';
+  } else if (zoneKey === 'obby') {
+    tx = 0; ty = 0.5; tz = -33; ry = Math.PI;
+    msg = '🏰 [천상 점프맵] 떡상 하늘 계단 출발선에 도착했습니다! 정상을 향해 점프하세요!';
   } else if (zoneKey === 'boss') {
     tx = -24; ty = 0; tz = 6; ry = -Math.PI / 2;
     msg = '👹 서관 공매도 심연 마왕 레이드에 참전했습니다! 성수를 준비하세요!';
@@ -3984,6 +4375,36 @@ function interactWithGoldAnt() {
   const logText = `동관 정원에서 [숨겨진 황금 개미] 성물을 발견하여 대축복(+80 EXP)을 받았습니다!`;
   addTestimonyToFeed(STATE.playerName, logText, 'long');
   sendMultiplayerTestimony(logText);
+}
+
+function ringSummitBell() {
+  if (!playerCharacter) return;
+  const now = Date.now();
+  if (STATE.lastSummitBellTime && now - STATE.lastSummitBellTime < 8000) {
+    showSpeechBubble(playerCharacter, '🔔 승천의 종은 8초마다 울릴 수 있습니다! 온 성전에 은혜가 울려 퍼지고 있습니다!');
+    return;
+  }
+  STATE.lastSummitBellTime = now;
+
+  addExp(300);
+  addMissionProgress('obby', 1);
+  showSpeechBubble(playerCharacter, '🔔 댕~~!! 천상 정상 정복! 승천의 종을 울렸습니다! (+300 EXP)');
+  spawnBlessingFire();
+  if (window.gajaAudio) {
+    window.gajaAudio.playAmenBellSfx();
+    setTimeout(() => { if (window.gajaAudio) window.gajaAudio.playLevelUpSfx(); }, 350);
+  }
+
+  const logText = `천상 떡상 점프맵 정상을 정복하고 [승천의 황금종]을 울려 대축복(+300 EXP)을 받았습니다!`;
+  addTestimonyToFeed(STATE.playerName, logText, 'long');
+  sendMultiplayerTestimony(logText);
+
+  if (STATE.multiWs && STATE.multiWs.readyState === WebSocket.OPEN) {
+    STATE.multiWs.send(JSON.stringify({
+      type: 'summit_bell',
+      name: STATE.playerName
+    }));
+  }
 }
 
 window.castProphecyVote = function(choice) {
