@@ -4772,9 +4772,60 @@ function setupServerConfigModal() {
 }
 
 // ==========================================
-// 12. DOM 초기화
+// 12. 모바일 브라우저 화면 왜곡/확대/축소 원천 방지 & DOM 초기화
 // ==========================================
+function setupMobileViewportProtection() {
+  // 1. iOS Safari 멀티터치 제스처 (핀치 줌인/줌아웃) 원천 차단
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(eventName => {
+    document.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    }, { passive: false });
+  });
+
+  // 2. 더블 탭 확대/축소(double-tap to zoom) 원천 차단
+  let lastTouchEndTime = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = performance.now();
+    if (now - lastTouchEndTime <= 320) {
+      const tag = e.target ? e.target.tagName : '';
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        e.preventDefault();
+      }
+    }
+    lastTouchEndTime = now;
+  }, { passive: false });
+
+  // 3. UI 레이어 및 비 캔버스 영역에서의 두 손가락 핀치 브라우저 확대/축소 차단
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length > 1) {
+      if (e.target && e.target.id !== 'gl-canvas') {
+        e.preventDefault();
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches.length > 1) {
+      if (e.target && e.target.id !== 'gl-canvas') {
+        e.preventDefault();
+      }
+    }
+  }, { passive: false });
+
+  // 4. iOS 사파리 뷰포트 왜곡/축소 복구 리스너
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      window.scrollTo(0, 0);
+      if (typeof onWindowResize === 'function') {
+        onWindowResize();
+      }
+    });
+  }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+  setupMobileViewportProtection();
   initWorld();
   setupServerConfigModal();
 

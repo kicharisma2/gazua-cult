@@ -30,9 +30,17 @@
 
 html,
 body {
-  width: 100%;
-  height: 100%;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
+  touch-action: none; /* 브라우저 자체의 핀치 줌, 더블탭 줌, 풀투리프레시 원천 차단 */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
   background-color: var(--bg-dark);
   font-family: var(--font-sans);
   color: var(--text-main);
@@ -44,12 +52,14 @@ body {
   width: 100%;
   height: 100%;
   z-index: 1;
+  touch-action: none;
 }
 
 canvas#gl-canvas {
   width: 100%;
   height: 100%;
   display: block;
+  touch-action: none; /* 3D 카메라 줌/회전 전용 */
 }
 
 /* UI 오버레이 */
@@ -58,14 +68,38 @@ canvas#gl-canvas {
   inset: 0;
   z-index: 10;
   pointer-events: none;
+  touch-action: none;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 12px 16px;
+  overflow: hidden;
 }
 
 .clickable {
   pointer-events: auto;
+  touch-action: manipulation; /* 탭 반응 극대화 & 더블 탭 확대 완전 방지 */
+}
+
+/* 터치 스크롤 허용 요소 명시 (페이지 전체 줌은 막고 내부 스크롤은 부드럽게) */
+.testimony-feed,
+.modal-body,
+.custom-tab-content,
+.chat-modal-feed,
+.missions-list,
+.modal-content {
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.toolbar-container,
+.custom-tabs {
+  touch-action: pan-x !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+button, input, select, textarea, .prayer-btn, .event-btn, .custom-btn-top, .modal-close-btn {
+  touch-action: manipulation !important;
 }
 
 .glass {
